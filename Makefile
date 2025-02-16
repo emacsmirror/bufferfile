@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2024-2025 James Cherti | https://www.jamescherti.com/contact/
-# URL: https://github.com/jamescherti/bufferwizard.el
+# URL: https://github.com/jamescherti/bfile.el
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,6 +33,6 @@ compile: cask
 	  -f batch-byte-compile $$(cask files); \
 	  (ret=$$? ; cask clean-elc && exit $$ret)
 
-# .PHONY: test
-# test: compile
-# 	cask emacs --batch -L . -L tests -l tests/test-bufferwizard.el -f test-bufferwizard
+.PHONY: test
+test:
+	cask emacs --batch -L . -L tests -l tests/test-bfile.el -f ert-run-tests-batch-and-exit
