@@ -2,7 +2,9 @@
 ![License](https://img.shields.io/github/license/jamescherti/bufferfile.el)
 ![](https://raw.githubusercontent.com/jamescherti/bufferfile.el/main/.images/made-for-gnu-emacs.svg)
 
-A suite of helper functions to delete and rename buffer files.
+A suite of helper functions to delete and rename buffer files:
+- `(bufferwizard-rename-file)`: Renames the file that the current buffer is visiting. This command renames the file name on disk, adjusts the buffer name, and updates any indirect buffers or other buffers associated with the old file.
+- `(bufferwizard-delete-file)`: Delete the file associated with a buffer and kill all buffers visiting the file, including indirect buffers.
 
 ## Installation
 
