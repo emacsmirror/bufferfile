@@ -1,10 +1,10 @@
-;;; test-bfile.el --- Test bfile -*- lexical-binding: t; -*-
+;;; test-bufferfile.el --- Test bufferfile -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024-2025 James Cherti | https://www.jamescherti.com/contact/
 
 ;; Author: James Cherti
 ;; Version: 0.9.9
-;; URL: https://github.com/jamescherti/bfile.el
+;; URL: https://github.com/jamescherti/bufferfile.el
 ;; Keywords: convenience
 ;; Package-Requires: ((emacs "24.1"))
 ;; SPDX-License-Identifier: GPL-3.0-or-later
@@ -23,16 +23,16 @@
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-;; Test bfile.
+;; Test bufferfile.
 
 ;;; Code:
 
-(defun test-bfile ()
-  "Test bfile."
+(defun test-bufferfile ()
+  "Test bufferfile."
   (interactive)
   ;; Testing: Only Melpazoid checks are currently implemented
   ;; (see Makefile for details)
   t)
 
-(provide 'test-bfile)
-;;; test-bfile.el ends here
+(provide 'test-bufferfile)
+;;; test-bufferfile.el ends here

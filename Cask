@@ -1,4 +1,4 @@
 (source gnu)
 (source melpa)
 
-(package-file "bfile.el")
+(package-file "bufferfile.el")

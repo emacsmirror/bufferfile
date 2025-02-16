@@ -1,7 +1,7 @@
-# bfile.el
-![Build Status](https://github.com/jamescherti/bfile.el/actions/workflows/ci.yml/badge.svg)
-![License](https://img.shields.io/github/license/jamescherti/bfile.el)
-![](https://raw.githubusercontent.com/jamescherti/bfile.el/main/.images/made-for-gnu-emacs.svg)
+# bufferfile.el
+![Build Status](https://github.com/jamescherti/bufferfile.el/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/github/license/jamescherti/bufferfile.el)
+![](https://raw.githubusercontent.com/jamescherti/bufferfile.el/main/.images/made-for-gnu-emacs.svg)
 
 A suite of helper functions to delete and rename buffer files.
 
@@ -9,33 +9,33 @@ A suite of helper functions to delete and rename buffer files.
 
 ### Install with straight (Emacs version < 30)
 
-To install `bfile` with `straight.el`:
+To install `bufferfile` with `straight.el`:
 
 1. It if hasn't already been done, [add the straight.el bootstrap code](https://github.com/radian-software/straight.el?tab=readme-ov-file#getting-started) to your init file.
 2. Add the following code to the Emacs init file:
 ```emacs-lisp
-(use-package bfile
+(use-package bufferfile
   :ensure t
-  :straight (bfile
+  :straight (bufferfile
              :type git
              :host github
-             :repo "jamescherti/bfile.el"))
+             :repo "jamescherti/bufferfile.el"))
 ```
 
 ### Installing with use-package and :vc (Built-in feature in Emacs version >= 30)
 
-To install `bfile` with `use-package` and `:vc` (Emacs >= 30):
+To install `bufferfile` with `use-package` and `:vc` (Emacs >= 30):
 
 ``` emacs-lisp
-(use-package bfile
+(use-package bufferfile
   :ensure t
-  :vc (:url "https://github.com/jamescherti/bfile.el"
+  :vc (:url "https://github.com/jamescherti/bufferfile.el"
        :rev :newest))
 ```
 
 ## Author and License
 
-The *bfile* Emacs package has been written by [James Cherti](https://www.jamescherti.com/) and is distributed under terms of the GNU General Public License version 3, or, at your choice, any later version.
+The *bufferfile* Emacs package has been written by [James Cherti](https://www.jamescherti.com/) and is distributed under terms of the GNU General Public License version 3, or, at your choice, any later version.
 
 Copyright (C) 2024-2025 James Cherti
 
@@ -43,4 +43,4 @@ This program is free software: you can redistribute it and/or modify it under th
 
 ## Links
 
-- [bfile.el @GitHub](https://github.com/jamescherti/bfile.el)
+- [bufferfile.el @GitHub](https://github.com/jamescherti/bufferfile.el)

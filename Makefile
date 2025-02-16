@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2024-2025 James Cherti | https://www.jamescherti.com/contact/
-# URL: https://github.com/jamescherti/bfile.el
+# URL: https://github.com/jamescherti/bufferfile.el
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,4 +35,4 @@ compile: cask
 
 .PHONY: test
 test:
-	cask emacs --batch -L . -L tests -l tests/test-bfile.el -f ert-run-tests-batch-and-exit
+	cask emacs --batch -L . -L tests -l tests/test-bufferfile.el -f ert-run-tests-batch-and-exit
