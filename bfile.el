@@ -150,6 +150,8 @@ Hooks in `bfile-before-rename-functions' and
 `bfile-after-rename-functions' are run before and after the renaming
 process."
   (interactive)
+  (when bfile-use-vc
+    (require 'vc))
   (unless buffer
     (setq buffer (current-buffer)))
   (let* ((filename (let ((file-name (buffer-file-name (buffer-base-buffer))))
@@ -237,6 +239,8 @@ Hooks in `bfile-before-delete-functions' and
 `bfile-after-delete-functions' are run before and after the renaming
 process."
   (interactive)
+  (when bfile-use-vc
+    (require 'vc))
   (let* ((buffer (or buffer (current-buffer)))
          (filename nil))
     (unless (buffer-live-p buffer)
@@ -249,7 +253,8 @@ process."
 
     (when (yes-or-no-p (format "Delete file '%s'?"
                                (file-name-nondirectory filename)))
-      (let ((vc-managed-file (vc-backend filename))
+      (let ((vc-managed-file (when bfile-use-vc
+                               (vc-backend filename)))
             (list-buffers (bfile--get-list-buffers filename)))
         (dolist (buf list-buffers)
           (with-current-buffer buf
@@ -259,6 +264,15 @@ process."
 
         (run-hook-with-args 'bfile-before-delete-functions
                             list-buffers filename)
+
+        (when vc-managed-file
+          ;; Revert version control changes before killing the buffer;
+          ;; otherwise, `vc-delete-file' will fail to delete the file
+          (when (not (vc-up-to-date-p filename))
+            (with-current-buffer buffer
+              (if (fboundp 'vc-revert-file)
+                  (vc-revert-file filename)
+                (error "vc-revert-file has been not declared")))))
 
         ;; Special cases
         (dolist (buf list-buffers)
@@ -283,11 +297,6 @@ process."
                    vc-managed-file)
               (cl-letf (((symbol-function 'yes-or-no-p)
                          (lambda (&rest _args) t)))
-                ;; Revert version control changes before killing the buffer;
-                ;; otherwise, `vc-delete-file' will fail to delete the file
-                (when (not (vc-up-to-date-p filename))
-                  (with-current-buffer buffer
-                    (vc-revert)))
 
                 ;; VC delete
                 (vc-delete-file filename))
