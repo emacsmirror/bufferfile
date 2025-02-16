@@ -1,4 +1,4 @@
-;;; bufferfile.el --- A suite of helper functions to delete and rename buffer files.  -*- lexical-binding: t; -*-
+;;; bufferfile.el --- A suite of helper functions to delete and rename buffer files. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024-2025 James Cherti | https://www.jamescherti.com/contact/
 
@@ -41,7 +41,7 @@
 (require 'hi-lock)
 
 (defgroup bufferfile nil
-  "Buffer wizard."
+  "Delete or rename buffer files."
   :group 'bufferfile
   :prefix "bufferfile-"
   :link '(url-link
@@ -200,14 +200,13 @@ process."
               (rename-file filename new-filename 1)
               (when bufferfile-verbose
                 (bufferfile--message "Rename: %s -> %s"
-                                filename
-                                (file-name-nondirectory new-filename))))
+                                     filename
+                                     (file-name-nondirectory new-filename))))
 
             (set-visited-file-name new-filename t t)
 
             ;; Update all buffers pointing to the old file Broken
-            (bufferfile--rename-all-buffer-names filename
-                                            new-filename)
+            (bufferfile--rename-all-buffer-names filename new-filename)
 
             (dolist (buf list-buffers)
               (with-current-buffer buf
