@@ -1,4 +1,4 @@
-;;; bufferfile.el --- A suite of helper functions to delete and rename buffer files. -*- lexical-binding: t; -*-
+;;; bufferfile.el --- Helper functions to delete and rename buffer files. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024-2025 James Cherti | https://www.jamescherti.com/contact/
 
@@ -6,7 +6,7 @@
 ;; Version: 0.9.9
 ;; URL: https://github.com/jamescherti/bufferfile.el
 ;; Keywords: convenience
-;; Package-Requires: ((emacs "24.1"))
+;; Package-Requires: ((emacs "24.3"))
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;; This file is free software; you can redistribute it and/or modify
