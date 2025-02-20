@@ -39,11 +39,44 @@ To install `bufferfile` with `use-package` and `:vc` (Emacs >= 30):
 
 ### How to make bufferwizard use version control (VC), such as Git, when renaming or deleting files?
 
-To make `bufferwizard` use version control (VC) when renaming or deleting files, you can set the variable `bufferfile-use-vc` to `t`. This ensures that file operations within `bufferwizard` interact with the version control system, preserving history and tracking changes properly.
+To make *bufferwizard* use version control (VC) when renaming or deleting files, you can set the variable `bufferfile-use-vc` to `t`. This ensures that file operations within *bufferwizard* interact with the version control system, preserving history and tracking changes properly.
 
 ``` emacs-lisp
 (setq bufferfile-use-vc t)
 ```
+
+### Hook Functions for File Operations in bufferwizard
+
+The *bufferwizard* package provides customizable hook variables that allow users to execute functions before and after renaming or deleting files. These hooks can be used to integrate additional logic, such as logging, or updating dependent buffers.
+
+#### Hooks for Renaming Files
+
+- **`bufferfile-before-rename-functions`**
+  A list of functions executed before renaming a file.
+  Each function receives three arguments:
+  - `list-buffers`: The list of buffers associated with the file.
+  - `previous-path`: The original file path.
+  - `new-path`: The new file path.
+
+- **`bufferfile-after-rename-functions`**
+  A list of functions executed after a file has been renamed.
+  Each function receives the same three arguments as `bufferfile-before-rename-functions`.
+
+These hooks can be used to ensure that version control systems, metadata, or external dependencies are updated correctly when a file is renamed.
+
+#### Hooks for Deleting Files
+
+- **`bufferfile-before-delete-functions`**
+  A list of functions executed before a file is deleted.
+  Each function receives two arguments:
+  - `list-buffers`: The list of buffers associated with the file.
+  - `path`: The file path to be deleted.
+
+- **`bufferfile-after-delete-functions`**
+  A list of functions executed after a file has been deleted.
+  Each function receives the same two arguments as `bufferfile-before-delete-functions`.
+
+These hooks are useful for handling version control removals, notifying external tools, or performing cleanup operations after file deletion.
 
 ## Author and License
 
