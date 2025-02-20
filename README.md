@@ -45,7 +45,7 @@ To make *bufferwizard* use version control (VC) when renaming or deleting files,
 (setq bufferfile-use-vc t)
 ```
 
-### Hook Functions for File Operations in bufferwizard
+### Hook functions
 
 The *bufferwizard* package provides customizable hook variables that allow users to execute functions before and after renaming or deleting files. These hooks can be used to integrate additional logic, such as logging, or updating dependent buffers.
 
