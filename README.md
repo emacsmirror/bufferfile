@@ -35,6 +35,16 @@ To install `bufferfile` with `use-package` and `:vc` (Emacs >= 30):
        :rev :newest))
 ```
 
+## Customizations
+
+### How to make bufferwizard use version control (VC), such as Git, when renaming or deleting files?
+
+To make `bufferwizard` use version control (VC) when renaming or deleting files, you can set the variable `bufferfile-use-vc` to `t`. This ensures that file operations within `bufferwizard` interact with the version control system, preserving history and tracking changes properly.
+
+``` emacs-lisp
+(setq bufferfile-use-vc t)
+```
+
 ## Author and License
 
 The *bufferfile* Emacs package has been written by [James Cherti](https://www.jamescherti.com/) and is distributed under terms of the GNU General Public License version 3, or, at your choice, any later version.

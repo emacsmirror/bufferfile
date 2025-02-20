@@ -47,7 +47,7 @@
           :tag "Github"
           "https://github.com/jamescherti/bufferfile.el"))
 
-(defcustom bufferfile-use-vc t
+(defcustom bufferfile-use-vc nil
   "If non-nil, enable using version control (VC) when available.
 When this option is enabled and the file being deleted or renamed is under VC,
 the renaming operation will be handled by the VC backend."
