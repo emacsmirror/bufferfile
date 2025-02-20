@@ -62,8 +62,6 @@ The *bufferwizard* package provides customizable hook variables that allow users
   A list of functions executed after a file has been renamed.
   Each function receives the same three arguments as `bufferfile-before-rename-functions`.
 
-These hooks can be used to ensure that version control systems, metadata, or external dependencies are updated correctly when a file is renamed.
-
 #### Hooks for Deleting Files
 
 - **`bufferfile-before-delete-functions`**
@@ -75,8 +73,6 @@ These hooks can be used to ensure that version control systems, metadata, or ext
 - **`bufferfile-after-delete-functions`**
   A list of functions executed after a file has been deleted.
   Each function receives the same two arguments as `bufferfile-before-delete-functions`.
-
-These hooks are useful for handling version control removals, notifying external tools, or performing cleanup operations after file deletion.
 
 ## Author and License
 
