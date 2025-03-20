@@ -1,4 +1,4 @@
-;;; bufferfile.el --- Helper functions to delete and rename buffer files. -*- lexical-binding: t; -*-
+;;; bufferfile.el --- Helper functions to delete and rename buffer files -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024-2025 James Cherti | https://www.jamescherti.com/contact/
 
