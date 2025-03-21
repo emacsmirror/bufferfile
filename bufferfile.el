@@ -1,4 +1,4 @@
-;;; bufferfile.el --- Helper functions to delete and rename buffer files -*- lexical-binding: t; -*-
+;;; bufferfile.el --- Helper functions to delete or rename files -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024-2025 James Cherti | https://www.jamescherti.com/contact/
 
@@ -24,15 +24,13 @@
 
 
 ;;; Commentary:
-;; The bufferfile Emacs package provides a collection of helper functions and
-;; commands for managing buffers.
-;;
-;; The current version includes the following functions:
-;; - `bufferfile-rename': Renames the file the current buffer is visiting. This
-;;   command updates the file name on disk, adjusts the buffer name, and updates
-;;   any indirect buffers or other buffers associated with the old file.
-;; - `bufferfile-delete': Delete the file associated with a buffer and kill all
-;;   buffers visiting the file, including indirect buffers or clones.
+;; This package provides helper functions to delete and rename buffer files:
+;; - (bufferwizard-rename-file): Renames the file that the current buffer is
+;;   visiting. This command renames the file name on disk, adjusts the buffer
+;;   name, and updates any indirect buffers or other buffers associated with the
+;;   old file.
+;; - (bufferwizard-delete-file): Delete the file associated with a buffer and
+;;   kill all buffers visiting the file, including indirect buffers.
 
 ;;; Code:
 
