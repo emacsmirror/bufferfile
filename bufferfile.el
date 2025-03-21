@@ -213,6 +213,7 @@ process."
                 (when (and (fboundp 'eglot-current-server)
                            (fboundp 'eglot-shutdown)
                            (fboundp 'eglot-managed-p)
+                           (fboundp 'eglot-ensure)
                            (eglot-managed-p))
                   (let ((server (eglot-current-server)))
                     (when server
