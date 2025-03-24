@@ -61,6 +61,11 @@ and outcome of the renaming process."
   :type 'boolean
   :group 'bufferfile)
 
+(defcustom bufferfile-rename-replace-existing nil
+  "If non-nil, allow overwriting an existing file when renaming a buffer file."
+  :type 'boolean
+  :group 'bufferfile)
+
 (defvar bufferfile-before-rename-functions nil
   "List of functions to run before renaming a file.
 Each function takes 3 argument: (list-buffers previous-path new-path).")
@@ -235,7 +240,7 @@ is non-nil."
                         list-buffers filename new-filename)))
 
 ;;;###autoload
-(defun bufferfile-rename (&optional buffer ok-if-already-exists)
+(defun bufferfile-rename (&optional buffer)
   "Rename the current file of that BUFFER is visiting.
 This command updates:
 - The file name on disk,
@@ -244,10 +249,7 @@ This command updates:
 
 Hooks in `bufferfile-before-rename-functions' and
 `bufferfile-after-rename-functions' are run before and after the renaming
-process.
-
-Signal an error if a file NEWNAME already exists unless OK-IF-ALREADY-EXISTS is
-non-nil."
+process."
   (interactive)
   (unless buffer
     (setq buffer (current-buffer)))
@@ -279,7 +281,7 @@ non-nil."
 
           (bufferfile-rename-file filename
                                   new-filename
-                                  ok-if-already-exists))))))
+                                  bufferfile-rename-replace-existing))))))
 
 ;;; Delete file
 
