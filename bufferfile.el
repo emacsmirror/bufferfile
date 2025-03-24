@@ -66,21 +66,29 @@ and outcome of the renaming process."
   :type 'boolean
   :group 'bufferfile)
 
-(defvar bufferfile-before-rename-functions nil
-  "List of functions to run before renaming a file.
-Each function takes 3 argument: (list-buffers previous-path new-path).")
+(defcustom bufferfile-pre-rename-functions nil
+  "Hook run before renaming a file.
+Each function receives three arguments: (previous-path new-path list-buffers)."
+  :type 'hook
+  :group 'bufferfile)
 
-(defvar bufferfile-after-rename-functions nil
-  "List of functions to run after renaming a file.
-Each function takes 3 argument: (list-buffers previous-path new-path).")
+(defcustom bufferfile-post-rename-functions nil
+  "Hook run after renaming a file.
+Each function receives three arguments: (previous-path new-path list-buffers)."
+  :type 'hook
+  :group 'bufferfile)
 
-(defvar bufferfile-before-delete-functions nil
-  "List of functions to run before deleting a file.
-Each function takes 2 argument: (list-buffers path).")
+(defcustom bufferfile-pre-delete-functions nil
+  "Hook run before deleting a file.
+Each function receives two arguments: (path list-buffers)."
+  :type 'hook
+  :group 'bufferfile)
 
-(defvar bufferfile-after-delete-functions nil
-  "List of functions to run after deleting a file.
-Each function takes 2 argument: (list-buffers path).")
+(defcustom bufferfile-post-delete-functions nil
+  "Hook run after deleting a file.
+Each function receives two arguments: (path list-buffers)."
+  :type 'hook
+  :group 'bufferfile)
 
 (defvar bufferfile-message-prefix "[bufferfile] "
   "Prefix used for messages and errors related to bufferfile operations.")
@@ -179,8 +187,8 @@ This function updates:
 - The buffer name,
 - All the indirect buffers or other buffers associated with the old filename.
 
-Hooks in `bufferfile-before-rename-functions' and
-`bufferfile-after-rename-functions' are run before and after the renaming
+Hooks in `bufferfile-pre-rename-functions' and
+`bufferfile-post-rename-functions' are run before and after the renaming
 process.
 
 Signal an error if a filename NEWNAME already exists unless OK-IF-ALREADY-EXISTS
@@ -194,8 +202,10 @@ is non-nil."
 
     (setq list-buffers (bufferfile--get-list-buffers filename))
 
-    (run-hook-with-args 'bufferfile-before-rename-functions
-                        list-buffers filename new-filename)
+    (run-hook-with-args 'bufferfile-pre-rename-functions
+                        filename
+                        new-filename
+                        list-buffers)
 
     (when bufferfile-use-vc
       (require 'vc))
@@ -236,8 +246,10 @@ is non-nil."
                 (eglot-shutdown server))
               (eglot-ensure))))))
 
-    (run-hook-with-args 'bufferfile-after-rename-functions
-                        list-buffers filename new-filename)))
+    (run-hook-with-args 'bufferfile-post-rename-functions
+                        filename
+                        new-filename
+                        list-buffers)))
 
 ;;;###autoload
 (defun bufferfile-rename (&optional buffer)
@@ -247,8 +259,8 @@ This command updates:
 - the buffer name,
 - all the indirect buffers or other buffers associated with the old file.
 
-Hooks in `bufferfile-before-rename-functions' and
-`bufferfile-after-rename-functions' are run before and after the renaming
+Hooks in `bufferfile-pre-rename-functions' and
+`bufferfile-post-rename-functions' are run before and after the renaming
 process."
   (interactive)
   (unless buffer
@@ -289,8 +301,8 @@ Delete the file associated with a buffer and kill all buffers visiting the file,
 including indirect buffers or clones.
 If BUFFER is nil, operate on the current buffer.
 
-Hooks in `bufferfile-before-delete-functions' and
-`bufferfile-after-delete-functions' are run before and after the renaming
+Hooks in `bufferfile-pre-delete-functions' and
+`bufferfile-post-delete-functions' are run before and after the renaming
 process."
   (interactive)
   (unless buffer
@@ -321,8 +333,8 @@ process."
                 (let ((save-silently t))
                   (save-buffer)))))
 
-          (run-hook-with-args 'bufferfile-before-delete-functions
-                              list-buffers filename)
+          (run-hook-with-args 'bufferfile-pre-delete-functions
+                              filename list-buffers)
 
           (when vc-managed-file
             ;; Revert version control changes before killing the buffer;
@@ -365,8 +377,9 @@ process."
           (when bufferfile-verbose
             (bufferfile--message "Deleted: %s" filename))
 
-          (run-hook-with-args 'bufferfile-after-delete-functions
-                              list-buffers filename))))))
+          (run-hook-with-args 'bufferfile-post-delete-functions
+                              filename
+                              list-buffers))))))
 
 (provide 'bufferfile)
 ;;; bufferfile.el ends here

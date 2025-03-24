@@ -51,28 +51,28 @@ The *bufferwizard* package provides customizable hook variables that allow users
 
 #### Hooks for Renaming Files
 
-- **`bufferfile-before-rename-functions`**
+- **`bufferfile-pre-rename-functions`**
   A list of functions executed before renaming a file.
   Each function receives three arguments:
   - `list-buffers`: The list of buffers associated with the file.
   - `previous-path`: The original file path.
   - `new-path`: The new file path.
 
-- **`bufferfile-after-rename-functions`**
+- **`bufferfile-post-rename-functions`**
   A list of functions executed after a file has been renamed.
-  Each function receives the same three arguments as `bufferfile-before-rename-functions`.
+  Each function receives the same three arguments as `bufferfile-pre-rename-functions`.
 
 #### Hooks for Deleting Files
 
-- **`bufferfile-before-delete-functions`**
+- **`bufferfile-pre-delete-functions`**
   A list of functions executed before a file is deleted.
   Each function receives two arguments:
   - `list-buffers`: The list of buffers associated with the file.
   - `path`: The file path to be deleted.
 
-- **`bufferfile-after-delete-functions`**
+- **`bufferfile-post-delete-functions`**
   A list of functions executed after a file has been deleted.
-  Each function receives the same two arguments as `bufferfile-before-delete-functions`.
+  Each function receives the same two arguments as `bufferfile-pre-delete-functions`.
 
 ## Author and License
 
