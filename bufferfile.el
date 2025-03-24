@@ -77,12 +77,15 @@ Each function takes 2 argument: (list-buffers path).")
   "List of functions to run after deleting a file.
 Each function takes 2 argument: (list-buffers path).")
 
+(defvar bufferfile-message-prefix "[bufferfile] "
+  "Prefix used for messages and errors related to bufferfile operations.")
+
 ;;; Helper functions
 
 (defun bufferfile--message (&rest args)
   "Display a message with '[bufferfile]' prepended.
 The message is formatted with the provided arguments ARGS."
-  (apply #'message (concat "[bufferfile] " (car args)) (cdr args)))
+  (apply #'message (concat bufferfile-message-prefix (car args)) (cdr args)))
 
 (defun bufferfile--get-list-buffers (filename)
   "Return a list of buffers visiting the specified FILENAME.
@@ -163,14 +166,18 @@ non-nil."
            (original-buffer (when filename
                               (get-file-buffer filename))))
       (unless filename
-        (error "[bufferfile] The buffer '%s' is not associated with a file"
+        (error "%sThe buffer '%s' is not associated with a file"
+               bufferfile-message-prefix
                (buffer-name)))
 
       (unless (file-regular-p filename)
-        (error "[bufferfile] The file '%s' does not exist on disk" filename))
+        (error "%sThe file '%s' does not exist on disk"
+               bufferfile-message-prefix
+               filename))
 
       (unless original-buffer
-        (error "[bufferfile] Could not locate the buffer for '%s'"
+        (error "%sCould not locate the buffer for '%s'"
+               bufferfile-message-prefix
                filename))
 
       (with-current-buffer original-buffer
@@ -181,7 +188,9 @@ non-nil."
         (let* ((basename (if filename
                              (file-name-nondirectory filename)
                            ""))
-               (new-basename (read-string "[bufferfile] New name: " basename))
+               (new-basename (read-string (format "%sNew name: "
+                                                  bufferfile-message-prefix)
+                                          basename))
                (list-buffers (bufferfile--get-list-buffers filename)))
           (unless (string= basename new-basename)
             (let ((new-filename (file-truename
@@ -189,9 +198,9 @@ non-nil."
                                   new-basename (file-name-directory filename)))))
               (when (and (not ok-if-already-exists)
                          (file-exists-p new-filename))
-                (error
-                 "[bufferfile] Rename failed: Destination file already exists: %s"
-                 new-filename))
+                (error "%sRename failed: Destination file already exists: %s"
+                       bufferfile-message-prefix
+                       new-filename))
 
               (run-hook-with-args 'bufferfile-before-rename-functions
                                   list-buffers filename new-filename)
@@ -256,12 +265,14 @@ process."
     (let* ((buffer (or buffer (current-buffer)))
            (filename nil))
       (unless (buffer-live-p buffer)
-        (error "[bufferfile] The buffer '%s' is not alive"
+        (error "%sThe buffer '%s' is not alive"
+               bufferfile-message-prefix
                (buffer-name buffer)))
 
       (setq filename (buffer-file-name (or (buffer-base-buffer buffer) buffer)))
       (unless filename
-        (error "[bufferfile] The buffer '%s' is not visiting a file"
+        (error "%sThe buffer '%s' is not visiting a file"
+               bufferfile-message-prefix
                (buffer-name buffer)))
       (setq filename (file-truename filename))
 
@@ -287,7 +298,8 @@ process."
                 (if (fboundp 'vc-revert-file)
                     (vc-revert-file filename)
                   (error
-                   "[bufferfile] vc-revert-file has been not declared")))))
+                   "%svc-revert-file has been not declared"
+                   bufferfile-message-prefix)))))
 
           ;; Special cases
           (dolist (buf list-buffers)
