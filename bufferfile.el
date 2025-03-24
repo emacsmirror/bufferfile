@@ -113,8 +113,17 @@ Returns a list of buffers that are associated with FILENAME."
 If BUFFER is nil, use the current buffer.
 Return nil if the buffer is not associated with a file."
   (let ((file-name (buffer-file-name (buffer-base-buffer buffer))))
-    (when file-name
-      (expand-file-name file-name))))
+    (unless filename
+      (error "%sThe buffer '%s' is not associated with a file"
+             bufferfile-message-prefix
+             (buffer-name)))
+
+    (unless (file-regular-p filename)
+      (error "%sThe file '%s' does not exist on disk"
+             bufferfile-message-prefix
+             filename))
+
+    (expand-file-name file-name)))
 
 ;;; Rename file
 
@@ -239,27 +248,11 @@ non-nil."
     (setq buffer (current-buffer)))
 
   (with-current-buffer buffer
-    (let* ((filename (bufferfile--get-buffer-filename buffer))
-           (original-buffer (when filename
-                              (get-file-buffer filename))))
-      (unless filename
-        (error "%sThe buffer '%s' is not associated with a file"
-               bufferfile-message-prefix
-               (buffer-name)))
-
-      (unless (file-regular-p filename)
-        (error "%sThe file '%s' does not exist on disk"
-               bufferfile-message-prefix
-               filename))
-
-      (unless original-buffer
-        (error "%sCould not locate the buffer for '%s'"
-               bufferfile-message-prefix
-               filename))
-
+    (let* ((filename (bufferfile--get-buffer-filename))
+           (original-buffer (or buffer-base-buffer (current-buffer))))
       (with-current-buffer original-buffer
         (when (buffer-modified-p)
-          (let ((save-silently t))
+          (let ((save-silently (not bufferfile-verbose)))
             (save-buffer)))
 
         (let* ((basename (if filename
