@@ -138,7 +138,7 @@ This includes indirect buffers whose names are derived from the old filename."
                           (rename-buffer new-buffer-name))))))))))))))
 
 ;;;###autoload
-(defun bufferfile-rename (&optional buffer)
+(defun bufferfile-rename (&optional buffer ok-if-already-exists)
   "Rename the current file of that BUFFER is visiting.
 This command updates:
 - The file name on disk,
@@ -147,83 +147,90 @@ This command updates:
 
 Hooks in `bufferfile-before-rename-functions' and
 `bufferfile-after-rename-functions' are run before and after the renaming
-process."
+process.
+
+Signal an error if a file NEWNAME already exists unless OK-IF-ALREADY-EXISTS is
+non-nil."
   (interactive)
   (when bufferfile-use-vc
     (require 'vc))
   (unless buffer
     (setq buffer (current-buffer)))
-  (let* ((filename (let ((file-name (buffer-file-name (buffer-base-buffer))))
-                     (when file-name
-                       (file-truename file-name))))
-         (original-buffer (when filename
-                            (get-file-buffer filename))))
-    (unless filename
-      (error "The buffer '%s' is not associated with a file"
-             (buffer-name)))
+  (with-current-buffer buffer
+    (let* ((filename (let ((file-name (buffer-file-name (buffer-base-buffer))))
+                       (when file-name
+                         (file-truename file-name))))
+           (original-buffer (when filename
+                              (get-file-buffer filename))))
+      (unless filename
+        (error "The buffer '%s' is not associated with a file"
+               (buffer-name)))
 
-    (unless (file-regular-p filename)
-      (error "The file '%s' does not exist on disk" filename))
+      (unless (file-regular-p filename)
+        (error "The file '%s' does not exist on disk" filename))
 
-    (unless original-buffer
-      (error "Could not locate the buffer for '%s'"
-             filename))
+      (unless original-buffer
+        (error "Could not locate the buffer for '%s'"
+               filename))
 
-    (with-current-buffer original-buffer
-      (when (buffer-modified-p)
-        (let ((save-silently t))
-          (save-buffer)))
+      (with-current-buffer original-buffer
+        (when (buffer-modified-p)
+          (let ((save-silently t))
+            (save-buffer)))
 
-      (let* ((basename (if filename
-                           (file-name-nondirectory filename)
-                         ""))
-             (new-basename (read-string "New name: " basename))
-             (list-buffers (bufferfile--get-list-buffers filename)))
-        (unless (string= basename new-basename)
-          (let ((new-filename (file-truename
-                               (expand-file-name
-                                new-basename (file-name-directory filename)))))
-            (run-hook-with-args 'bufferfile-before-rename-functions
-                                list-buffers filename new-filename)
+        (let* ((basename (if filename
+                             (file-name-nondirectory filename)
+                           ""))
+               (new-basename (read-string "New name: " basename))
+               (list-buffers (bufferfile--get-list-buffers filename)))
+          (unless (string= basename new-basename)
+            (let ((new-filename (file-truename
+                                 (expand-file-name
+                                  new-basename (file-name-directory filename)))))
+              (when (file-exists-p new-filename)
+                (error "The destination file exists: %s" new-filename))
 
-            (if (and bufferfile-use-vc
-                     (vc-backend filename))
-                (progn
-                  ;; Rename the file using VC
-                  (vc-rename-file filename new-filename)
-                  (when bufferfile-verbose
-                    (bufferfile--message
-                     "VC Rename: %s -> %s"
-                     filename (file-name-nondirectory new-filename))))
-              ;; Rename
-              (rename-file filename new-filename 1)
-              (when bufferfile-verbose
-                (bufferfile--message "Rename: %s -> %s"
-                                     filename
-                                     (file-name-nondirectory new-filename))))
+              (run-hook-with-args 'bufferfile-before-rename-functions
+                                  list-buffers filename new-filename)
 
-            (set-visited-file-name new-filename t t)
+              (if (and bufferfile-use-vc
+                       (vc-backend filename))
+                  (progn
+                    ;; Rename the file using VC
+                    (vc-rename-file filename new-filename)
+                    (when bufferfile-verbose
+                      (bufferfile--message
+                       "VC Rename: %s -> %s"
+                       filename (file-name-nondirectory new-filename))))
+                ;; Rename
+                (rename-file filename new-filename ok-if-already-exists)
+                (when bufferfile-verbose
+                  (bufferfile--message "Rename: %s -> %s"
+                                       filename
+                                       (file-name-nondirectory new-filename))))
 
-            ;; Update all buffers pointing to the old file Broken
-            (bufferfile--rename-all-buffer-names filename new-filename)
+              (set-visited-file-name new-filename t t)
 
-            (dolist (buf list-buffers)
-              (with-current-buffer buf
-                ;; Eglot checkers fail when files are renamed because they
-                (when (and (fboundp 'eglot-current-server)
-                           (fboundp 'eglot-shutdown)
-                           (fboundp 'eglot-managed-p)
-                           (fboundp 'eglot-ensure)
-                           (eglot-managed-p))
-                  (let ((server (eglot-current-server)))
-                    (when server
-                      ;; Restart eglot
-                      (let ((inhibit-message t))
-                        (eglot-shutdown server))
-                      (eglot-ensure))))))
+              ;; Update all buffers pointing to the old file Broken
+              (bufferfile--rename-all-buffer-names filename new-filename)
 
-            (run-hook-with-args 'bufferfile-after-rename-functions
-                                list-buffers filename new-filename)))))))
+              (dolist (buf list-buffers)
+                (with-current-buffer buf
+                  ;; Eglot checkers fail when files are renamed because they
+                  (when (and (fboundp 'eglot-current-server)
+                             (fboundp 'eglot-shutdown)
+                             (fboundp 'eglot-managed-p)
+                             (fboundp 'eglot-ensure)
+                             (eglot-managed-p))
+                    (let ((server (eglot-current-server)))
+                      (when server
+                        ;; Restart eglot
+                        (let ((inhibit-message t))
+                          (eglot-shutdown server))
+                        (eglot-ensure))))))
+
+              (run-hook-with-args 'bufferfile-after-rename-functions
+                                  list-buffers filename new-filename))))))))
 
 ;;; Delete file
 
@@ -240,73 +247,76 @@ process."
   (interactive)
   (when bufferfile-use-vc
     (require 'vc))
-  (let* ((buffer (or buffer (current-buffer)))
-         (filename nil))
-    (unless (buffer-live-p buffer)
-      (error "The buffer '%s' is not alive" (buffer-name buffer)))
+  (unless buffer
+    (setq buffer (current-buffer)))
+  (with-current-buffer buffer
+    (let* ((buffer (or buffer (current-buffer)))
+           (filename nil))
+      (unless (buffer-live-p buffer)
+        (error "The buffer '%s' is not alive" (buffer-name buffer)))
 
-    (setq filename (buffer-file-name (or (buffer-base-buffer buffer) buffer)))
-    (unless filename
-      (error "The buffer '%s' is not visiting a file" (buffer-name buffer)))
-    (setq filename (file-truename filename))
+      (setq filename (buffer-file-name (or (buffer-base-buffer buffer) buffer)))
+      (unless filename
+        (error "The buffer '%s' is not visiting a file" (buffer-name buffer)))
+      (setq filename (file-truename filename))
 
-    (when (yes-or-no-p (format "Delete file '%s'?"
-                               (file-name-nondirectory filename)))
-      (let ((vc-managed-file (when bufferfile-use-vc
-                               (vc-backend filename)))
-            (list-buffers (bufferfile--get-list-buffers filename)))
-        (dolist (buf list-buffers)
-          (with-current-buffer buf
-            (when (buffer-modified-p)
-              (let ((save-silently t))
-                (save-buffer)))))
+      (when (yes-or-no-p (format "Delete file '%s'?"
+                                 (file-name-nondirectory filename)))
+        (let ((vc-managed-file (when bufferfile-use-vc
+                                 (vc-backend filename)))
+              (list-buffers (bufferfile--get-list-buffers filename)))
+          (dolist (buf list-buffers)
+            (with-current-buffer buf
+              (when (buffer-modified-p)
+                (let ((save-silently t))
+                  (save-buffer)))))
 
-        (run-hook-with-args 'bufferfile-before-delete-functions
-                            list-buffers filename)
+          (run-hook-with-args 'bufferfile-before-delete-functions
+                              list-buffers filename)
 
-        (when vc-managed-file
-          ;; Revert version control changes before killing the buffer;
-          ;; otherwise, `vc-delete-file' will fail to delete the file
-          (when (not (vc-up-to-date-p filename))
-            (with-current-buffer buffer
-              (if (fboundp 'vc-revert-file)
-                  (vc-revert-file filename)
-                (error "vc-revert-file has been not declared")))))
+          (when vc-managed-file
+            ;; Revert version control changes before killing the buffer;
+            ;; otherwise, `vc-delete-file' will fail to delete the file
+            (when (not (vc-up-to-date-p filename))
+              (with-current-buffer buffer
+                (if (fboundp 'vc-revert-file)
+                    (vc-revert-file filename)
+                  (error "vc-revert-file has been not declared")))))
 
-        ;; Special cases
-        (dolist (buf list-buffers)
-          (with-current-buffer buf
-            (when (and (fboundp 'eglot-current-server)
-                       (fboundp 'eglot-shutdown)
-                       (fboundp 'eglot-managed-p)
-                       (eglot-managed-p))
-              (let ((server (eglot-current-server)))
-                (when server
-                  ;; Do not display errors such as:
-                  ;; [jsonrpc] (warning) Sentinel for EGLOT
-                  ;; (ansible-unused/(python-mode python-ts-mode)) still hasn't
-                  ;; run, deleting it!
-                  ;; [jsonrpc] Server exited with status 9
-                  (let ((inhibit-message t))
-                    (eglot-shutdown server))))))
-          (kill-buffer buf))
+          ;; Special cases
+          (dolist (buf list-buffers)
+            (with-current-buffer buf
+              (when (and (fboundp 'eglot-current-server)
+                         (fboundp 'eglot-shutdown)
+                         (fboundp 'eglot-managed-p)
+                         (eglot-managed-p))
+                (let ((server (eglot-current-server)))
+                  (when server
+                    ;; Do not display errors such as:
+                    ;; [jsonrpc] (warning) Sentinel for EGLOT
+                    ;; (ansible-unused/(python-mode python-ts-mode)) still
+                    ;; hasn't run, deleting it!
+                    ;; [jsonrpc] Server exited with status 9
+                    (let ((inhibit-message t))
+                      (eglot-shutdown server))))))
+            (kill-buffer buf))
 
-        (when (file-exists-p filename)
-          (if (and bufferfile-use-vc
-                   vc-managed-file)
-              (cl-letf (((symbol-function 'yes-or-no-p)
-                         (lambda (&rest _args) t)))
+          (when (file-exists-p filename)
+            (if (and bufferfile-use-vc
+                     vc-managed-file)
+                (cl-letf (((symbol-function 'yes-or-no-p)
+                           (lambda (&rest _args) t)))
 
-                ;; VC delete
-                (vc-delete-file filename))
-            ;; Delete
-            (delete-file filename)))
+                  ;; VC delete
+                  (vc-delete-file filename))
+              ;; Delete
+              (delete-file filename)))
 
-        (when bufferfile-verbose
-          (bufferfile--message "Deleted: %s" filename))
+          (when bufferfile-verbose
+            (bufferfile--message "Deleted: %s" filename))
 
-        (run-hook-with-args 'bufferfile-after-delete-functions
-                            list-buffers filename)))))
+          (run-hook-with-args 'bufferfile-after-delete-functions
+                              list-buffers filename))))))
 
 (provide 'bufferfile)
 ;;; bufferfile.el ends here
