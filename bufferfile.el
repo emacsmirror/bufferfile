@@ -66,6 +66,8 @@ and outcome of the renaming process."
   :type 'boolean
   :group 'bufferfile)
 
+;;; Variables
+
 (defvar bufferfile-pre-rename-functions nil
   "Hook run before renaming a file.
 Each function receives three arguments: (previous-path new-path list-buffers).")
