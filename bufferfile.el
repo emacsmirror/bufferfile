@@ -263,7 +263,6 @@ process."
             (save-buffer)))
 
         (let* ((basename (file-name-nondirectory filename))
-               (truename (file-truename filename))
                (new-filename (read-file-name
                               (format "%sRename '%s' to: "
                                       bufferfile-message-prefix
@@ -273,9 +272,7 @@ process."
                               nil
                               nil
                               #'(lambda(filename)
-                                  (and (file-regular-p filename)
-                                       (not (string= (file-truename filename)
-                                                     truename)))))))
+                                  (file-regular-p filename)))))
           (unless new-filename
             (bufferfile--error "A new file name must be specified"))
 
