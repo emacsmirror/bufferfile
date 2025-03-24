@@ -108,6 +108,10 @@ Returns a list of buffers that are associated with FILENAME."
             (push buf list-buffers)))))
     list-buffers))
 
+(defun bufferfile--get-buffer-filename (buffer)
+  "Return the path to the buffer file."
+  )
+
 ;;; Rename file
 
 (defun bufferfile--rename-all-buffer-names (old-filename new-filename)
@@ -140,8 +144,6 @@ This includes indirect buffers whose names are derived from the old filename."
                         (when new-buffer-name
                           (rename-buffer new-buffer-name))))))))))))))
 
-;;;###autoload
-
 (defun bufferfile-rename-file (filename
                                new-filename
                                &optional ok-if-already-exists)
@@ -158,7 +160,6 @@ process.
 
 Signal an error if a filename NEWNAME already exists unless OK-IF-ALREADY-EXISTS
 is non-nil."
-  (interactive)
   (let (list-buffers)
     (setq list-buffers (bufferfile--get-list-buffers filename))
     (when (and (not ok-if-already-exists)
@@ -212,6 +213,7 @@ is non-nil."
     (run-hook-with-args 'bufferfile-after-rename-functions
                         list-buffers filename new-filename)))
 
+;;;###autoload
 (defun bufferfile-rename (&optional buffer ok-if-already-exists)
   "Rename the current file of that BUFFER is visiting.
 This command updates:
