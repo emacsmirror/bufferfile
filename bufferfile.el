@@ -162,7 +162,7 @@ non-nil."
   (with-current-buffer buffer
     (let* ((filename (let ((file-name (buffer-file-name (buffer-base-buffer))))
                        (when file-name
-                         (file-truename file-name))))
+                         (expand-file-name file-name))))
            (original-buffer (when filename
                               (get-file-buffer filename))))
       (unless filename
@@ -188,61 +188,64 @@ non-nil."
         (let* ((basename (if filename
                              (file-name-nondirectory filename)
                            ""))
-               (new-basename (read-string (format "%sNew name: "
-                                                  bufferfile-message-prefix)
-                                          basename))
-               (list-buffers (bufferfile--get-list-buffers filename)))
-          (unless (string= basename new-basename)
-            (let ((new-filename (file-truename
-                                 (expand-file-name
-                                  new-basename (file-name-directory filename)))))
-              (when (and (not ok-if-already-exists)
-                         (file-exists-p new-filename))
-                (error "%sRename failed: Destination file already exists: %s"
-                       bufferfile-message-prefix
-                       new-filename))
+               ;; TODO: Use predicate to find destination files that do not
+               ;; exist
+               (new-filename (read-file-name
+                              (format "%sRename '%s' to: "
+                                      bufferfile-message-prefix
+                                      basename)
+                              (file-name-directory filename)))
+               list-buffers)
+          (unless new-filename
+            (error "A new file name must be specified"))
+          (setq list-buffers (bufferfile--get-list-buffers filename))
+          (when (and (not ok-if-already-exists)
+                     (file-exists-p new-filename))
+            (error "%sRename failed: Destination file already exists: %s"
+                   bufferfile-message-prefix
+                   new-filename))
 
-              (run-hook-with-args 'bufferfile-before-rename-functions
-                                  list-buffers filename new-filename)
+          (run-hook-with-args 'bufferfile-before-rename-functions
+                              list-buffers filename new-filename)
 
-              (if (and bufferfile-use-vc
-                       (vc-backend filename))
-                  (progn
-                    ;; Rename the file using VC
-                    (vc-rename-file filename new-filename)
-                    (when bufferfile-verbose
-                      (bufferfile--message
-                       "VC Rename: %s -> %s"
-                       filename (file-name-nondirectory new-filename))))
-                ;; Rename
-                (rename-file filename new-filename ok-if-already-exists)
+          (if (and bufferfile-use-vc
+                   (vc-backend filename))
+              (progn
+                ;; Rename the file using VC
+                (vc-rename-file filename new-filename)
                 (when bufferfile-verbose
-                  (bufferfile--message "Rename: %s -> %s"
-                                       filename
-                                       (file-name-nondirectory new-filename))))
+                  (bufferfile--message
+                   "VC Rename: %s -> %s"
+                   filename (file-name-nondirectory new-filename))))
+            ;; Rename
+            (rename-file filename new-filename ok-if-already-exists)
+            (when bufferfile-verbose
+              (bufferfile--message "Rename: %s -> %s"
+                                   filename
+                                   (file-name-nondirectory new-filename))))
 
-              (set-visited-file-name new-filename t t)
+          (set-visited-file-name new-filename t t)
 
-              ;; Update all buffers pointing to the old file Broken
-              (bufferfile--rename-all-buffer-names filename new-filename)
+          ;; Update all buffers pointing to the old file Broken
+          (bufferfile--rename-all-buffer-names filename new-filename)
 
-              (dolist (buf list-buffers)
-                (with-current-buffer buf
-                  ;; Eglot checkers fail when files are renamed because they
-                  (when (and (fboundp 'eglot-current-server)
-                             (fboundp 'eglot-shutdown)
-                             (fboundp 'eglot-managed-p)
-                             (fboundp 'eglot-ensure)
-                             (eglot-managed-p))
-                    (let ((server (eglot-current-server)))
-                      (when server
-                        ;; Restart eglot
-                        (let ((inhibit-message t))
-                          (eglot-shutdown server))
-                        (eglot-ensure))))))
+          (dolist (buf list-buffers)
+            (with-current-buffer buf
+              ;; Eglot checkers fail when files are renamed because they
+              (when (and (fboundp 'eglot-current-server)
+                         (fboundp 'eglot-shutdown)
+                         (fboundp 'eglot-managed-p)
+                         (fboundp 'eglot-ensure)
+                         (eglot-managed-p))
+                (let ((server (eglot-current-server)))
+                  (when server
+                    ;; Restart eglot
+                    (let ((inhibit-message t))
+                      (eglot-shutdown server))
+                    (eglot-ensure))))))
 
-              (run-hook-with-args 'bufferfile-after-rename-functions
-                                  list-buffers filename new-filename))))))))
+          (run-hook-with-args 'bufferfile-after-rename-functions
+                              list-buffers filename new-filename))))))
 
 ;;; Delete file
 
@@ -274,7 +277,7 @@ process."
         (error "%sThe buffer '%s' is not visiting a file"
                bufferfile-message-prefix
                (buffer-name buffer)))
-      (setq filename (file-truename filename))
+      (setq filename (expand-file-name filename))
 
       (when (yes-or-no-p (format "Delete file '%s'?"
                                  (file-name-nondirectory filename)))
@@ -297,9 +300,8 @@ process."
               (with-current-buffer buffer
                 (if (fboundp 'vc-revert-file)
                     (vc-revert-file filename)
-                  (error
-                   "%svc-revert-file has been not declared"
-                   bufferfile-message-prefix)))))
+                  (error "%svc-revert-file has been not declared"
+                         bufferfile-message-prefix)))))
 
           ;; Special cases
           (dolist (buf list-buffers)
