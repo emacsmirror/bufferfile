@@ -163,14 +163,14 @@ non-nil."
            (original-buffer (when filename
                               (get-file-buffer filename))))
       (unless filename
-        (error "The buffer '%s' is not associated with a file"
+        (error "[bufferfile] The buffer '%s' is not associated with a file"
                (buffer-name)))
 
       (unless (file-regular-p filename)
-        (error "The file '%s' does not exist on disk" filename))
+        (error "[bufferfile] The file '%s' does not exist on disk" filename))
 
       (unless original-buffer
-        (error "Could not locate the buffer for '%s'"
+        (error "[bufferfile] Could not locate the buffer for '%s'"
                filename))
 
       (with-current-buffer original-buffer
@@ -181,14 +181,17 @@ non-nil."
         (let* ((basename (if filename
                              (file-name-nondirectory filename)
                            ""))
-               (new-basename (read-string "New name: " basename))
+               (new-basename (read-string "[bufferfile] New name: " basename))
                (list-buffers (bufferfile--get-list-buffers filename)))
           (unless (string= basename new-basename)
             (let ((new-filename (file-truename
                                  (expand-file-name
                                   new-basename (file-name-directory filename)))))
-              (when (file-exists-p new-filename)
-                (error "The destination file exists: %s" new-filename))
+              (when (and (not ok-if-already-exists)
+                         (file-exists-p new-filename))
+                (error
+                 "[bufferfile] Rename failed: Destination file already exists: %s"
+                 new-filename))
 
               (run-hook-with-args 'bufferfile-before-rename-functions
                                   list-buffers filename new-filename)
@@ -253,11 +256,13 @@ process."
     (let* ((buffer (or buffer (current-buffer)))
            (filename nil))
       (unless (buffer-live-p buffer)
-        (error "The buffer '%s' is not alive" (buffer-name buffer)))
+        (error "[bufferfile] The buffer '%s' is not alive"
+               (buffer-name buffer)))
 
       (setq filename (buffer-file-name (or (buffer-base-buffer buffer) buffer)))
       (unless filename
-        (error "The buffer '%s' is not visiting a file" (buffer-name buffer)))
+        (error "[bufferfile] The buffer '%s' is not visiting a file"
+               (buffer-name buffer)))
       (setq filename (file-truename filename))
 
       (when (yes-or-no-p (format "Delete file '%s'?"
@@ -281,7 +286,8 @@ process."
               (with-current-buffer buffer
                 (if (fboundp 'vc-revert-file)
                     (vc-revert-file filename)
-                  (error "vc-revert-file has been not declared")))))
+                  (error
+                   "[bufferfile] vc-revert-file has been not declared")))))
 
           ;; Special cases
           (dolist (buf list-buffers)
