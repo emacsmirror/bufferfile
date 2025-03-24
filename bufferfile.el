@@ -1,4 +1,4 @@
-;;; bufferfile.el --- Helper functions to delete or rename files -*- lexical-binding: t; -*-
+;;; bufferfile.el --- Delete or rename buffer file names efficiently -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024-2025 James Cherti | https://www.jamescherti.com/contact/
 
@@ -61,6 +61,11 @@ and outcome of the renaming process."
   :type 'boolean
   :group 'bufferfile)
 
+(defcustom bufferfile-rename-replace-existing nil
+  "If non-nil, allow overwriting an existing file when renaming a buffer file."
+  :type 'boolean
+  :group 'bufferfile)
+
 (defvar bufferfile-before-rename-functions nil
   "List of functions to run before renaming a file.
 Each function takes 3 argument: (list-buffers previous-path new-path).")
@@ -81,6 +86,11 @@ Each function takes 2 argument: (list-buffers path).")
   "Prefix used for messages and errors related to bufferfile operations.")
 
 ;;; Helper functions
+
+(defun bufferfile--error (&rest args)
+  "Signal an error with `bufferfile-message-prefix' followed by formatted ARGS.
+ARGS are formatted as in `format'."
+  (error "%s%s" bufferfile-message-prefix (apply #'format args)))
 
 (defun bufferfile--message (&rest args)
   "Display a message with '[bufferfile]' prepended.
@@ -107,6 +117,25 @@ Returns a list of buffers that are associated with FILENAME."
                      (string-equal filename (file-truename buf-filename)))
             (push buf list-buffers)))))
     list-buffers))
+
+(defun bufferfile--get-buffer-filename (&optional buffer)
+  "Return the absolute file path of BUFFER.
+If BUFFER is nil, use the current buffer.
+Return nil if the buffer is not associated with a file."
+  (unless buffer
+    (setq buffer (current-buffer)))
+  (when (buffer-live-p buffer)
+    (with-current-buffer buffer
+      (let ((filename (buffer-file-name (buffer-base-buffer))))
+        (unless filename
+          (bufferfile--error "The buffer '%s' is not associated with a file"
+                             (buffer-name)))
+
+        (unless (file-regular-p filename)
+          (bufferfile--error "The file '%s' does not exist on disk"
+                             filename))
+
+        (expand-file-name filename)))))
 
 ;;; Rename file
 
@@ -140,8 +169,78 @@ This includes indirect buffers whose names are derived from the old filename."
                         (when new-buffer-name
                           (rename-buffer new-buffer-name))))))))))))))
 
+(defun bufferfile-rename-file (filename
+                               new-filename
+                               &optional ok-if-already-exists)
+  "Rename FILENAME to NEW-FILENAME.
+
+This function updates:
+- The filename name on disk,
+- The buffer name,
+- All the indirect buffers or other buffers associated with the old filename.
+
+Hooks in `bufferfile-before-rename-functions' and
+`bufferfile-after-rename-functions' are run before and after the renaming
+process.
+
+Signal an error if a filename NEWNAME already exists unless OK-IF-ALREADY-EXISTS
+is non-nil."
+  (let (list-buffers)
+    (when (and (not ok-if-already-exists)
+               (file-exists-p new-filename))
+      (bufferfile--error
+       "Rename failed: Destination filename already exists: %s"
+       new-filename))
+
+    (setq list-buffers (bufferfile--get-list-buffers filename))
+
+    (run-hook-with-args 'bufferfile-before-rename-functions
+                        list-buffers filename new-filename)
+
+    (when bufferfile-use-vc
+      (require 'vc))
+
+    (if (and bufferfile-use-vc
+             (vc-backend filename))
+        (progn
+          ;; Rename the file using VC
+          (vc-rename-file filename new-filename)
+          (when bufferfile-verbose
+            (bufferfile--message
+             "VC Rename: %s -> %s"
+             filename new-filename)))
+      ;; Rename the file
+      (rename-file filename new-filename ok-if-already-exists)
+      (when bufferfile-verbose
+        (bufferfile--message "Rename: %s -> %s"
+                             filename
+                             new-filename)))
+
+    (set-visited-file-name new-filename t t)
+
+    ;; Update all buffers pointing to the old filename Broken
+    (bufferfile--rename-all-buffer-names filename new-filename)
+
+    (dolist (buf list-buffers)
+      (with-current-buffer buf
+        ;; Eglot checkers fail when files are renamed because they
+        (when (and (fboundp 'eglot-current-server)
+                   (fboundp 'eglot-shutdown)
+                   (fboundp 'eglot-managed-p)
+                   (fboundp 'eglot-ensure)
+                   (eglot-managed-p))
+          (let ((server (eglot-current-server)))
+            (when server
+              ;; Restart eglot
+              (let ((inhibit-message t))
+                (eglot-shutdown server))
+              (eglot-ensure))))))
+
+    (run-hook-with-args 'bufferfile-after-rename-functions
+                        list-buffers filename new-filename)))
+
 ;;;###autoload
-(defun bufferfile-rename (&optional buffer ok-if-already-exists)
+(defun bufferfile-rename (&optional buffer)
   "Rename the current file of that BUFFER is visiting.
 This command updates:
 - The file name on disk,
@@ -150,99 +249,36 @@ This command updates:
 
 Hooks in `bufferfile-before-rename-functions' and
 `bufferfile-after-rename-functions' are run before and after the renaming
-process.
-
-Signal an error if a file NEWNAME already exists unless OK-IF-ALREADY-EXISTS is
-non-nil."
+process."
   (interactive)
-  (when bufferfile-use-vc
-    (require 'vc))
   (unless buffer
     (setq buffer (current-buffer)))
+
   (with-current-buffer buffer
-    (let* ((filename (let ((file-name (buffer-file-name (buffer-base-buffer))))
-                       (when file-name
-                         (file-truename file-name))))
-           (original-buffer (when filename
-                              (get-file-buffer filename))))
-      (unless filename
-        (error "%sThe buffer '%s' is not associated with a file"
-               bufferfile-message-prefix
-               (buffer-name)))
-
-      (unless (file-regular-p filename)
-        (error "%sThe file '%s' does not exist on disk"
-               bufferfile-message-prefix
-               filename))
-
-      (unless original-buffer
-        (error "%sCould not locate the buffer for '%s'"
-               bufferfile-message-prefix
-               filename))
-
+    (let* ((filename (bufferfile--get-buffer-filename))
+           (original-buffer (or (buffer-base-buffer) (current-buffer))))
       (with-current-buffer original-buffer
         (when (buffer-modified-p)
-          (let ((save-silently t))
+          (let ((save-silently (not bufferfile-verbose)))
             (save-buffer)))
 
-        (let* ((basename (if filename
-                             (file-name-nondirectory filename)
-                           ""))
-               (new-basename (read-string (format "%sNew name: "
-                                                  bufferfile-message-prefix)
-                                          basename))
-               (list-buffers (bufferfile--get-list-buffers filename)))
-          (unless (string= basename new-basename)
-            (let ((new-filename (file-truename
-                                 (expand-file-name
-                                  new-basename (file-name-directory filename)))))
-              (when (and (not ok-if-already-exists)
-                         (file-exists-p new-filename))
-                (error "%sRename failed: Destination file already exists: %s"
-                       bufferfile-message-prefix
-                       new-filename))
+        (let* ((basename (file-name-nondirectory filename))
+               (new-filename (read-file-name
+                              (format "%sRename '%s' to: "
+                                      bufferfile-message-prefix
+                                      basename)
+                              (file-name-directory filename)
+                              nil
+                              nil
+                              nil
+                              #'(lambda(filename)
+                                  (file-regular-p filename)))))
+          (unless new-filename
+            (bufferfile--error "A new file name must be specified"))
 
-              (run-hook-with-args 'bufferfile-before-rename-functions
-                                  list-buffers filename new-filename)
-
-              (if (and bufferfile-use-vc
-                       (vc-backend filename))
-                  (progn
-                    ;; Rename the file using VC
-                    (vc-rename-file filename new-filename)
-                    (when bufferfile-verbose
-                      (bufferfile--message
-                       "VC Rename: %s -> %s"
-                       filename (file-name-nondirectory new-filename))))
-                ;; Rename
-                (rename-file filename new-filename ok-if-already-exists)
-                (when bufferfile-verbose
-                  (bufferfile--message "Rename: %s -> %s"
-                                       filename
-                                       (file-name-nondirectory new-filename))))
-
-              (set-visited-file-name new-filename t t)
-
-              ;; Update all buffers pointing to the old file Broken
-              (bufferfile--rename-all-buffer-names filename new-filename)
-
-              (dolist (buf list-buffers)
-                (with-current-buffer buf
-                  ;; Eglot checkers fail when files are renamed because they
-                  (when (and (fboundp 'eglot-current-server)
-                             (fboundp 'eglot-shutdown)
-                             (fboundp 'eglot-managed-p)
-                             (fboundp 'eglot-ensure)
-                             (eglot-managed-p))
-                    (let ((server (eglot-current-server)))
-                      (when server
-                        ;; Restart eglot
-                        (let ((inhibit-message t))
-                          (eglot-shutdown server))
-                        (eglot-ensure))))))
-
-              (run-hook-with-args 'bufferfile-after-rename-functions
-                                  list-buffers filename new-filename))))))))
+          (bufferfile-rename-file filename
+                                  new-filename
+                                  bufferfile-rename-replace-existing))))))
 
 ;;; Delete file
 
@@ -257,27 +293,25 @@ Hooks in `bufferfile-before-delete-functions' and
 `bufferfile-after-delete-functions' are run before and after the renaming
 process."
   (interactive)
-  (when bufferfile-use-vc
-    (require 'vc))
   (unless buffer
     (setq buffer (current-buffer)))
   (with-current-buffer buffer
     (let* ((buffer (or buffer (current-buffer)))
            (filename nil))
       (unless (buffer-live-p buffer)
-        (error "%sThe buffer '%s' is not alive"
-               bufferfile-message-prefix
-               (buffer-name buffer)))
+        (bufferfile--error "The buffer '%s' is not alive"
+                           (buffer-name buffer)))
 
       (setq filename (buffer-file-name (or (buffer-base-buffer buffer) buffer)))
       (unless filename
-        (error "%sThe buffer '%s' is not visiting a file"
-               bufferfile-message-prefix
-               (buffer-name buffer)))
-      (setq filename (file-truename filename))
+        (bufferfile--error "The buffer '%s' is not visiting a file"
+                           (buffer-name buffer)))
+      (setq filename (expand-file-name filename))
 
       (when (yes-or-no-p (format "Delete file '%s'?"
                                  (file-name-nondirectory filename)))
+        (when bufferfile-use-vc
+          (require 'vc))
         (let ((vc-managed-file (when bufferfile-use-vc
                                  (vc-backend filename)))
               (list-buffers (bufferfile--get-list-buffers filename)))
@@ -297,9 +331,7 @@ process."
               (with-current-buffer buffer
                 (if (fboundp 'vc-revert-file)
                     (vc-revert-file filename)
-                  (error
-                   "%svc-revert-file has been not declared"
-                   bufferfile-message-prefix)))))
+                  (bufferfile--error "vc-revert-file has been not declared")))))
 
           ;; Special cases
           (dolist (buf list-buffers)
