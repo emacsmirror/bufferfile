@@ -108,9 +108,13 @@ Returns a list of buffers that are associated with FILENAME."
             (push buf list-buffers)))))
     list-buffers))
 
-(defun bufferfile--get-buffer-filename (buffer)
-  "Return the path to the buffer file."
-  )
+(defun bufferfile--get-buffer-filename (&optional buffer)
+  "Return the absolute file path of BUFFER.
+If BUFFER is nil, use the current buffer.
+Return nil if the buffer is not associated with a file."
+  (let ((file-name (buffer-file-name (buffer-base-buffer buffer))))
+    (when file-name
+      (expand-file-name file-name))))
 
 ;;; Rename file
 
@@ -235,9 +239,7 @@ non-nil."
     (setq buffer (current-buffer)))
 
   (with-current-buffer buffer
-    (let* ((filename (let ((file-name (buffer-file-name (buffer-base-buffer))))
-                       (when file-name
-                         (expand-file-name file-name))))
+    (let* ((filename (bufferfile--get-buffer-filename buffer))
            (original-buffer (when filename
                               (get-file-buffer filename))))
       (unless filename
