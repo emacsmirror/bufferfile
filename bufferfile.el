@@ -66,29 +66,21 @@ and outcome of the renaming process."
   :type 'boolean
   :group 'bufferfile)
 
-(defcustom bufferfile-pre-rename-functions nil
+(defvar bufferfile-pre-rename-functions nil
   "Hook run before renaming a file.
-Each function receives three arguments: (previous-path new-path list-buffers)."
-  :type 'hook
-  :group 'bufferfile)
+Each function receives three arguments: (previous-path new-path list-buffers).")
 
-(defcustom bufferfile-post-rename-functions nil
+(defvar bufferfile-post-rename-functions nil
   "Hook run after renaming a file.
-Each function receives three arguments: (previous-path new-path list-buffers)."
-  :type 'hook
-  :group 'bufferfile)
+Each function receives three arguments: (previous-path new-path list-buffers).")
 
-(defcustom bufferfile-pre-delete-functions nil
+(defvar bufferfile-pre-delete-functions nil
   "Hook run before deleting a file.
-Each function receives two arguments: (path list-buffers)."
-  :type 'hook
-  :group 'bufferfile)
+Each function receives two arguments: (path list-buffers).")
 
-(defcustom bufferfile-post-delete-functions nil
+(defvar bufferfile-post-delete-functions nil
   "Hook run after deleting a file.
-Each function receives two arguments: (path list-buffers)."
-  :type 'hook
-  :group 'bufferfile)
+Each function receives two arguments: (path list-buffers).")
 
 (defvar bufferfile-message-prefix "[bufferfile] "
   "Prefix used for messages and errors related to bufferfile operations.")
