@@ -61,10 +61,7 @@ and outcome of the renaming process."
   :type 'boolean
   :group 'bufferfile)
 
-(defcustom bufferfile-rename-replace-existing nil
-  "If non-nil, allow overwriting an existing file when renaming a buffer file."
-  :type 'boolean
-  :group 'bufferfile)
+;;; Variables
 
 (defvar bufferfile-pre-rename-functions nil
   "Hook run before renaming a file.
@@ -188,9 +185,13 @@ is non-nil."
   (let (list-buffers)
     (when (and (not ok-if-already-exists)
                (file-exists-p new-filename))
-      (bufferfile--error
-       "Rename failed: Destination filename already exists: %s"
-       new-filename))
+      (unless (y-or-n-p
+               (format
+                "Destination file '%s' already exists. Do you want to overwrite it?"
+                new-filename))
+        (bufferfile--error
+         "Rename failed: Destination filename already exists: %s"
+         new-filename)))
 
     (setq list-buffers (bufferfile--get-list-buffers filename))
 
@@ -280,9 +281,7 @@ process."
           (unless new-filename
             (bufferfile--error "A new file name must be specified"))
 
-          (bufferfile-rename-file filename
-                                  new-filename
-                                  bufferfile-rename-replace-existing))))))
+          (bufferfile-rename-file filename new-filename t))))))
 
 ;;; Delete file
 
