@@ -342,9 +342,7 @@ process."
               (when (and (derived-mode-p 'dired-mode)
                          (fboundp 'dired-goto-file))
                 (dired-goto-file filename)))
-
-            (let ((switch-to-buffer-obey-display-actions nil))
-              (switch-to-buffer dir-buffer)))
+            (switch-to-buffer dir-buffer nil t))
 
           ;; Kill buffer
           (dolist (buf list-buffers)
