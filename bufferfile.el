@@ -336,7 +336,17 @@ process."
                     (vc-revert-file filename)
                   (bufferfile--error "vc-revert-file has been not declared")))))
 
-          ;; Special cases
+          ;; Find file first
+          (when-let* ((dir-buffer (find-file (file-name-directory filename))))
+            (with-current-buffer dir-buffer
+              (when (and (derived-mode-p 'dired-mode)
+                         (fboundp 'dired-goto-file))
+                (dired-goto-file filename)))
+
+            (let ((switch-to-buffer-obey-display-actions nil))
+              (switch-to-buffer dir-buffer)))
+
+          ;; Kill buffer
           (dolist (buf list-buffers)
             (with-current-buffer buf
               (when (and (fboundp 'eglot-current-server)
