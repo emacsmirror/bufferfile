@@ -78,16 +78,16 @@ The *bufferfile* package provides customizable hook variables that allow users t
 
 ## Frequently asked questions
 
-### What is the difference between bufferfile and the built-in Emacs and dired rename and delete functions?
+### What is the difference between bufferfile and the built-in Emacs rename and delete functions?
 
-Here are the limitations of Emacs' built-in and Dired functions:
+Here are the limitations of Emacs' built-in functions:
 
-- **Renaming**: Indirect buffers point to the correct buffer, but their names are not updated.
-- **Deleting**: Indirect buffers are not removed when the base buffer or an indirect buffer is deleted.
+- Renaming: Indirect buffers point to the correct file path, but their buffer names become outdated.
+- Deleting: Indirect buffers are not removed when the base buffer or another indirect buffer is deleted.
 
-The *bufferfile* package addresses these issues by ensuring that buffer names are updated when renaming a file and that all buffers, including indirect buffers, are deleted when removing a file.
+**The bufferfile package addresses these issues by ensuring that buffer names are updated when renaming a file and that all buffers, including indirect buffers, are deleted when a file is removed.**
 
-These limitations of the built-in functions motivated the development of *bufferfile*, which enhances support for renaming and deleting buffers, including indirect buffers.
+These limitations of the built-in functions motivated the development of *bufferfile*, which improves support for renaming and deleting buffers, including indirect buffers.
 
 ## Author and License
 
