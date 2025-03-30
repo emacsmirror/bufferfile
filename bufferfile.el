@@ -168,7 +168,8 @@ This includes indirect buffers whose names are derived from the old filename."
                                                    (length basename)))))
                     (when (string-prefix-p basename indirect-buffer-name)
                       (when new-buffer-name
-                        (rename-buffer new-buffer-name)))))))))))))
+                        (ignore-errors
+                          (rename-buffer new-buffer-name))))))))))))))
 
 (defun bufferfile-rename-file (filename
                                new-filename
