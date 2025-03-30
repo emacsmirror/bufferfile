@@ -80,7 +80,9 @@ The *bufferwizard* package provides customizable hook variables that allow users
 
 ### What is the difference between bufferfile and the built-in C-x C-j R and C-x C-j D?
 
-The `C-x C-j R` and `C-x C-j D` key bindings do not support renaming associated buffers, including indirect buffers (clones). This limitation was one of the motivations for developing the `bufferfile` package, which extends support for renaming and deleting buffers, including indirect buffers.
+The `C-x C-j R` and `C-x C-j D` key bindings do not support renaming associated buffers, including indirect buffers (clones).
+
+This limitation of the built-in functions was one of the motivations for developing the *bufferfile* package, which extends support for renaming and deleting buffers, including indirect buffers.
 
 ## Author and License
 
