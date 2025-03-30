@@ -279,7 +279,7 @@ process."
                               (file-name-directory filename)
                               nil
                               nil
-                              nil
+                              basename
                               #'(lambda(filename)
                                   (file-regular-p filename)))))
           (unless new-filename
