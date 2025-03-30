@@ -76,6 +76,12 @@ The *bufferwizard* package provides customizable hook variables that allow users
   A list of functions executed after a file has been deleted.
   Each function receives the same two arguments as `bufferfile-pre-delete-functions`.
 
+## Frequently asked questions
+
+### What is the difference between bufferfile and the built-in C-x C-j R and C-x C-j D?
+
+The `C-x C-j R` and `C-x C-j D` key bindings do not support renaming associated buffers, including indirect buffers (clones). This limitation was one of the motivations for developing the `bufferfile` package, which extends support for renaming and deleting buffers, including indirect buffers.
+
 ## Author and License
 
 The *bufferfile* Emacs package has been written by [James Cherti](https://www.jamescherti.com/) and is distributed under terms of the GNU General Public License version 3, or, at your choice, any later version.
