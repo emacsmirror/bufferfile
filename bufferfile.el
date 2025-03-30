@@ -197,7 +197,6 @@ is non-nil."
          "Rename failed: Destination filename already exists: %s"
          new-filename)))
 
-    (setq new-filename (expand-file-name new-filename))
     (setq list-buffers (bufferfile--get-list-buffers filename))
 
     (run-hook-with-args 'bufferfile-pre-rename-functions
