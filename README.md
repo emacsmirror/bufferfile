@@ -80,9 +80,9 @@ The *bufferfile* package provides customizable hook variables that allow users t
 - **`bufferfile-pre-rename-functions`**
   A list of functions executed before renaming a file.
   Each function receives three arguments:
-  - `list-buffers`: The list of buffers associated with the file.
   - `previous-path`: The original file path.
   - `new-path`: The new file path.
+  - `list-buffers`: The list of buffers associated with the file.
 
 - **`bufferfile-post-rename-functions`**
   A list of functions executed after a file has been renamed.
@@ -93,8 +93,8 @@ The *bufferfile* package provides customizable hook variables that allow users t
 - **`bufferfile-pre-delete-functions`**
   A list of functions executed before a file is deleted.
   Each function receives two arguments:
-  - `list-buffers`: The list of buffers associated with the file.
   - `path`: The file path to be deleted.
+  - `list-buffers`: The list of buffers associated with the file.
 
 - **`bufferfile-post-delete-functions`**
   A list of functions executed after a file has been deleted.
