@@ -4,8 +4,8 @@
 ![](https://raw.githubusercontent.com/jamescherti/bufferfile.el/main/.images/made-for-gnu-emacs.svg)
 
 This package provides helper functions to delete and rename buffer files:
-- `bufferwizard-rename-file`: Renames the file that the current buffer is visiting. This command renames the file name on disk, adjusts the buffer name, and updates any indirect buffers or other buffers associated with the old file.
-- `bufferwizard-delete-file`: Delete the file associated with a buffer and kill all buffers visiting the file, including indirect buffers.
+- `bufferfile-rename-file`: Renames the file that the current buffer is visiting. This command renames the file name on disk, adjusts the buffer name, and updates any indirect buffers or other buffers associated with the old file.
+- `bufferfile-delete-file`: Delete the file associated with a buffer and kill all buffers visiting the file, including indirect buffers.
 
 ## Installation
 
@@ -37,9 +37,9 @@ To install `bufferfile` with `use-package` and `:vc` (Emacs >= 30):
 
 ## Customizations
 
-### Making bufferwizard use version control (VC), such as Git, when renaming or deleting files?
+### Making bufferfile use version control (VC), such as Git, when renaming or deleting files?
 
-To make *bufferwizard* use version control (VC) when renaming or deleting files, you can set the variable `bufferfile-use-vc` to `t`. This ensures that file operations within *bufferwizard* interact with the version control system, preserving history and tracking changes properly.
+To make *bufferfile* use version control (VC) when renaming or deleting files, you can set the variable `bufferfile-use-vc` to `t`. This ensures that file operations within *bufferfile* interact with the version control system, preserving history and tracking changes properly.
 
 ``` emacs-lisp
 (setq bufferfile-use-vc t)
@@ -49,7 +49,7 @@ To make *bufferwizard* use version control (VC) when renaming or deleting files,
 
 ### Hook functions
 
-The *bufferwizard* package provides customizable hook variables that allow users to execute functions before and after renaming or deleting files. These hooks can be used to integrate additional logic, such as logging, or updating dependent buffers.
+The *bufferfile* package provides customizable hook variables that allow users to execute functions before and after renaming or deleting files. These hooks can be used to integrate additional logic, such as logging, or updating dependent buffers.
 
 #### Hooks for Renaming Files
 
@@ -78,7 +78,9 @@ The *bufferwizard* package provides customizable hook variables that allow users
 
 ## Frequently asked questions
 
-### What is the difference between bufferfile and the built-in C-x C-j R and C-x C-j D?
+### What is the difference between bufferfile and the built-in rename-visited-file
+
+C-x C-j R and C-x C-j D?
 
 The `C-x C-j R` and `C-x C-j D` key bindings do not support renaming associated buffers, including indirect buffers (clones).
 
