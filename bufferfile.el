@@ -6,7 +6,7 @@
 ;; Version: 1.0.1
 ;; URL: https://github.com/jamescherti/bufferfile.el
 ;; Keywords: convenience
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "26.1"))
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;; This file is free software; you can redistribute it and/or modify
@@ -138,33 +138,37 @@ Return nil if the buffer is not associated with a file."
 
 (defun bufferfile--rename-all-buffer-names (old-filename new-filename)
   "Update buffer names to reflect the renaming of a file.
-OLD-FILENAME and NEW-FILENAME are absolute paths as returned by `file-truename'.
+OLD-FILENAME and NEW-FILENAME are absolute paths as returned by
+`expand-file-name'.
 
 For all buffers associated with OLD-FILENAME, update the buffer names to use
 NEW-FILENAME.
 
 This includes indirect buffers whose names are derived from the old filename."
+  (setq old-filename (expand-file-name old-filename))
+  (setq new-filename (expand-file-name new-filename))
   (let ((basename (file-name-nondirectory old-filename))
         (new-basename (file-name-nondirectory new-filename)))
     (dolist (buf (buffer-list))
       (when (buffer-live-p buf)
         (with-current-buffer buf
-          (let ((base-buffer (buffer-base-buffer)))
-            (when base-buffer
-              (let* ((base-buffer-file-name
-                      (let ((file-name (buffer-file-name base-buffer)))
-                        (when file-name
-                          (file-truename file-name)))))
-                (when (and base-buffer-file-name
-                           (string= base-buffer-file-name new-filename))
-                  (let ((indirect-buffer-name (buffer-name)))
-                    (let* ((new-buffer-name (concat new-basename
-                                                    (substring
-                                                     indirect-buffer-name
-                                                     (length basename)))))
-                      (when (string-prefix-p basename indirect-buffer-name)
-                        (when new-buffer-name
-                          (rename-buffer new-buffer-name))))))))))))))
+          (when-let* ((base-buffer (buffer-base-buffer)))
+            ;; Indirect buffer
+            (let* ((base-buffer-filename
+                    (let ((file-name (buffer-file-name base-buffer)))
+                      (when file-name
+                        (expand-file-name file-name)))))
+              (when (and base-buffer-filename
+                         (string= (file-truename new-filename)
+                                  (file-truename base-buffer-filename)))
+                (let ((indirect-buffer-name (buffer-name)))
+                  (let* ((new-buffer-name (concat new-basename
+                                                  (substring
+                                                   indirect-buffer-name
+                                                   (length basename)))))
+                    (when (string-prefix-p basename indirect-buffer-name)
+                      (when new-buffer-name
+                        (rename-buffer new-buffer-name)))))))))))))
 
 (defun bufferfile-rename-file (filename
                                new-filename
@@ -193,6 +197,7 @@ is non-nil."
          "Rename failed: Destination filename already exists: %s"
          new-filename)))
 
+    (setq new-filename (expand-file-name new-filename))
     (setq list-buffers (bufferfile--get-list-buffers filename))
 
     (run-hook-with-args 'bufferfile-pre-rename-functions
