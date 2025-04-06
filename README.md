@@ -63,12 +63,10 @@ To install `bufferfile` with `use-package` and `:vc` (Emacs >= 30):
 
 ## Usage
 
-This package provides interactive commands for renaming or deleting the file associated with the current buffer. These operations ensure that both the file on disk and the buffer visiting it are handled consistently.
-
-- To rename the current buffer's file, run: `M-x bufferfile-rename`
+- To rename the current buffer's file and associated buffers, run: `M-x bufferfile-rename`
   (You will be prompted to enter a new name. The file will be renamed on disk, and the buffer—along with any associated buffers such as indirect buffers—will begin visiting the new file, with their buffer names updated accordingly.)
 
-- To delete the current buffer's file, run: `M-x bufferfile-delete`
+- To delete the current buffer's file and associated buffers, run: `M-x bufferfile-delete`
   (You will be asked to confirm the deletion. If confirmed, the file will be removed from disk, and all associated buffers, including indirect buffers, will be killed.)
 
 ## Customizations
