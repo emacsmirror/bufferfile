@@ -413,7 +413,9 @@ process."
           (unless new-filename
             (bufferfile--error "A new file name must be specified"))
 
-          (copy-file filename new-filename t))))))
+          (unless (string= (file-truename filename)
+                           (file-truename new-filename))
+            (copy-file filename new-filename t)))))))
 
 ;;; Provide
 (provide 'bufferfile)
