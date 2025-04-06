@@ -1,4 +1,4 @@
-# bufferfile.el - Rename/Delete/Copy Files and Associated Buffers (e.g., clones/indirect buffers)
+# bufferfile.el - Rename, Delete, or Copy Files and Associated Buffers (e.g., clones/indirect buffers)
 ![Build Status](https://github.com/jamescherti/bufferfile.el/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/github/license/jamescherti/bufferfile.el)
 ![](https://raw.githubusercontent.com/jamescherti/bufferfile.el/main/.images/made-for-gnu-emacs.svg)
@@ -13,7 +13,7 @@ This package provides helper functions to delete and rename buffer files:
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 ## Table of Contents
 
-- [bufferfile.el - Rename/Delete/Copy Files and Associated Buffers (e.g., clones/indirect buffers)](#bufferfileel---renamedeletecopy-files-and-associated-buffers-eg-clonesindirect-buffers)
+- [bufferfile.el - Rename, Delete, or Copy Files and Associated Buffers (e.g., clones/indirect buffers)](#bufferfileel---rename-delete-or-copy-files-and-associated-buffers-eg-clonesindirect-buffers)
   - [Introduction](#introduction)
   - [Installation](#installation)
     - [Install with straight (Emacs version < 30)](#install-with-straight-emacs-version--30)
