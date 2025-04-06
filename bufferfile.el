@@ -1,4 +1,4 @@
-;;; bufferfile.el --- Rename or Delete Buffers and Associated Files and Buffers -*- lexical-binding: t; -*-
+;;; bufferfile.el --- Rename or Delete Files and Associated Buffers -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024-2025 James Cherti | https://www.jamescherti.com/contact/
 
