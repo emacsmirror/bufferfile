@@ -17,9 +17,10 @@ This package provides helper functions to delete and rename buffer files:
   - [Installation](#installation)
     - [Install with straight (Emacs version < 30)](#install-with-straight-emacs-version--30)
     - [Installing with use-package and :vc (Built-in feature in Emacs version >= 30)](#installing-with-use-package-and-vc-built-in-feature-in-emacs-version--30)
+  - [Usage](#usage)
   - [Customizations](#customizations)
     - [Making bufferfile use version control (VC), such as Git, when renaming or deleting files?](#making-bufferfile-use-version-control-vc-such-as-git-when-renaming-or-deleting-files)
-    - [Usage](#usage)
+    - [Usage](#usage-1)
     - [Hook functions](#hook-functions)
       - [Hooks for Renaming Files](#hooks-for-renaming-files)
       - [Hooks for Deleting Files](#hooks-for-deleting-files)
@@ -59,6 +60,16 @@ To install `bufferfile` with `use-package` and `:vc` (Emacs >= 30):
   :vc (:url "https://github.com/jamescherti/bufferfile.el"
        :rev :newest))
 ```
+
+## Usage
+
+This package provides interactive commands for renaming or deleting the file associated with the current buffer. These operations ensure that both the file on disk and the buffer visiting it are handled consistently.
+
+- To rename the current buffer's file, run: `M-x bufferfile-rename`
+  (You will be prompted to enter a new name. The file will be renamed on disk, and the buffer—along with any associated buffers such as indirect buffers—will begin visiting the new file, with their buffer names updated accordingly.)
+
+- To delete the current buffer's file, run: `M-x bufferfile-delete`
+  (You will be asked to confirm the deletion. If confirmed, the file will be removed from disk, and all associated buffers, including indirect buffers, will be killed.)
 
 ## Customizations
 
