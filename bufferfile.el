@@ -1,4 +1,4 @@
-;;; bufferfile.el --- Rename or delete buffers and associated files -*- lexical-binding: t; -*-
+;;; bufferfile.el --- Rename or Delete Buffers and Associated Files and Buffers -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024-2025 James Cherti | https://www.jamescherti.com/contact/
 
@@ -73,11 +73,11 @@ Each function receives three arguments: (previous-path new-path list-buffers).")
 
 (defvar bufferfile-pre-delete-functions nil
   "Hook run before deleting a file.
-Each function receives two arguments: (path list-buffers).")
+Each function receives two arguments: (path list_buffers).")
 
 (defvar bufferfile-post-delete-functions nil
   "Hook run after deleting a file.
-Each function receives two arguments: (path list-buffers).")
+Each function receives two arguments: (path list_buffers).")
 
 (defvar bufferfile-message-prefix "[bufferfile] "
   "Prefix used for messages and errors related to bufferfile operations.")
