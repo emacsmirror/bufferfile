@@ -214,13 +214,14 @@ is non-nil."
           (when bufferfile-verbose
             (bufferfile--message
              "VC Rename: %s -> %s"
-             filename new-filename)))
+             (abbreviate-file-name filename)
+             (abbreviate-file-name new-filename))))
       ;; Rename the file
       (rename-file filename new-filename ok-if-already-exists)
       (when bufferfile-verbose
         (bufferfile--message "Rename: %s -> %s"
-                             filename
-                             new-filename)))
+                             (abbreviate-file-name filename)
+                             (abbreviate-file-name new-filename))))
 
     (set-visited-file-name new-filename t t)
 
@@ -377,7 +378,7 @@ process."
               (delete-file filename)))
 
           (when bufferfile-verbose
-            (bufferfile--message "Deleted: %s" filename))
+            (bufferfile--message "Deleted: %s" (abbreviate-file-name filename)))
 
           (run-hook-with-args 'bufferfile-post-delete-functions
                               filename
@@ -415,6 +416,10 @@ process."
 
           (unless (string= (file-truename filename)
                            (file-truename new-filename))
+            (when bufferfile-verbose
+              (bufferfile--message "Copy: %s -> %s"
+                                   (abbreviate-file-name filename)
+                                   (abbreviate-file-name new-filename)))
             (copy-file filename new-filename t)))))))
 
 ;;; Provide
