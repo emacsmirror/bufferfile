@@ -1,4 +1,4 @@
-;;; bufferfile.el --- Rename or Delete Files and Associated Buffers -*- lexical-binding: t; -*-
+;;; bufferfile.el --- Rename/Delete/Copy Files and Associated Buffers -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024-2025 James Cherti | https://www.jamescherti.com/contact/
 
@@ -383,5 +383,38 @@ process."
                               filename
                               list-buffers))))))
 
+;;; Copy
+
+(defun bufferfile-copy (&optional buffer)
+  "Copy the current file of that BUFFER is visiting."
+  (interactive)
+  (unless buffer
+    (setq buffer (current-buffer)))
+
+  (with-current-buffer buffer
+    (let* ((filename (bufferfile--get-buffer-filename))
+           (original-buffer (or (buffer-base-buffer) (current-buffer))))
+      (with-current-buffer original-buffer
+        (when (buffer-modified-p)
+          (let ((save-silently (not bufferfile-verbose)))
+            (save-buffer)))
+
+        (let* ((basename (file-name-nondirectory filename))
+               (new-filename (read-file-name
+                              (format "%sCopy '%s' to: "
+                                      bufferfile-message-prefix
+                                      basename)
+                              (file-name-directory filename)
+                              nil
+                              nil
+                              basename
+                              #'(lambda(filename)
+                                  (file-regular-p filename)))))
+          (unless new-filename
+            (bufferfile--error "A new file name must be specified"))
+
+          (copy-file filename new-filename t))))))
+
+;;; Provide
 (provide 'bufferfile)
 ;;; bufferfile.el ends here
