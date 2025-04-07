@@ -133,6 +133,28 @@ Return nil if the buffer is not associated with a file."
 
         (expand-file-name filename)))))
 
+(defun bufferfile--read-dest-file-name (filename)
+  "Prompt for a destination file name different from FILENAME."
+  (let* ((basename (file-name-nondirectory filename))
+         (new-filename (read-file-name
+                        (format "%sCopy '%s' to: "
+                                bufferfile-message-prefix
+                                basename)
+                        (file-name-directory filename)
+                        nil
+                        nil
+                        basename
+                        #'(lambda(filename)
+                            (file-regular-p filename)))))
+    (unless new-filename
+      (bufferfile--error "A new file name must be specified"))
+
+    (when (string= (file-truename filename)
+                   (file-truename new-filename))
+      (bufferfile--error
+       "Ignored because the destination is the same as the source"))
+    new-filename))
+
 ;;; Rename file
 
 (defun bufferfile--rename-all-buffer-names (old-filename new-filename)
@@ -230,7 +252,7 @@ is non-nil."
 
     (dolist (buf list-buffers)
       (with-current-buffer buf
-        ;; Eglot checkers fail when files are renamed because they
+        ;; Fix Eglot
         (when (and (fboundp 'eglot-current-server)
                    (fboundp 'eglot-shutdown)
                    (fboundp 'eglot-managed-p)
@@ -271,20 +293,7 @@ process."
           (let ((save-silently (not bufferfile-verbose)))
             (save-buffer)))
 
-        (let* ((basename (file-name-nondirectory filename))
-               (new-filename (read-file-name
-                              (format "%sRename '%s' to: "
-                                      bufferfile-message-prefix
-                                      basename)
-                              (file-name-directory filename)
-                              nil
-                              nil
-                              basename
-                              #'(lambda(filename)
-                                  (file-regular-p filename)))))
-          (unless new-filename
-            (bufferfile--error "A new file name must be specified"))
-
+        (let ((new-filename (bufferfile--read-dest-file-name filename)))
           (bufferfile-rename-file filename new-filename t))))))
 
 ;;; Delete file
@@ -400,27 +409,12 @@ process."
           (let ((save-silently (not bufferfile-verbose)))
             (save-buffer)))
 
-        (let* ((basename (file-name-nondirectory filename))
-               (new-filename (read-file-name
-                              (format "%sCopy '%s' to: "
-                                      bufferfile-message-prefix
-                                      basename)
-                              (file-name-directory filename)
-                              nil
-                              nil
-                              basename
-                              #'(lambda(filename)
-                                  (file-regular-p filename)))))
-          (unless new-filename
-            (bufferfile--error "A new file name must be specified"))
-
-          (unless (string= (file-truename filename)
-                           (file-truename new-filename))
-            (when bufferfile-verbose
-              (bufferfile--message "Copy: %s -> %s"
-                                   (abbreviate-file-name filename)
-                                   (abbreviate-file-name new-filename)))
-            (copy-file filename new-filename t)))))))
+        (let ((new-filename (bufferfile--read-dest-file-name filename)))
+          (when bufferfile-verbose
+            (bufferfile--message "Copy: %s -> %s"
+                                 (abbreviate-file-name filename)
+                                 (abbreviate-file-name new-filename)))
+          (copy-file filename new-filename t))))))
 
 ;;; Provide
 (provide 'bufferfile)
