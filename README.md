@@ -10,6 +10,8 @@ This package provides helper functions to delete and rename buffer files:
 - `bufferfile-delete`: Delete the file associated with a buffer and kill all buffers visiting the file, including clones/indirect buffers.
 - `bufferfile-copy`: Copies the file visited by the current buffer to a new file.
 
+(The functions above also ensures that any modified buffers are saved prior to executing operations like renaming, deleting, or copying.)
+
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
 ## Table of Contents
 
