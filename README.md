@@ -1,5 +1,7 @@
 # bufferfile.el - Rename, Delete, or Copy Files and Associated Buffers (e.g., clones/indirect buffers)
 ![Build Status](https://github.com/jamescherti/bufferfile.el/actions/workflows/ci.yml/badge.svg)
+[![MELPA](https://melpa.org/packages/bufferfile-badge.svg)](https://melpa.org/#/bufferfile)
+[![MELPA Stable](https://stable.melpa.org/packages/bufferfile-badge.svg)](https://stable.melpa.org/#/bufferfile)
 ![License](https://img.shields.io/github/license/jamescherti/bufferfile.el)
 ![](https://raw.githubusercontent.com/jamescherti/bufferfile.el/main/.images/made-for-gnu-emacs.svg)
 
@@ -17,9 +19,7 @@ This package provides helper functions to delete and rename buffer files:
 
 - [bufferfile.el - Rename, Delete, or Copy Files and Associated Buffers (e.g., clones/indirect buffers)](#bufferfileel---rename-delete-or-copy-files-and-associated-buffers-eg-clonesindirect-buffers)
   - [Introduction](#introduction)
-  - [Installation](#installation)
-    - [Install with straight (Emacs version < 30)](#install-with-straight-emacs-version--30)
-    - [Installing with use-package and :vc (Built-in feature in Emacs version >= 30)](#installing-with-use-package-and-vc-built-in-feature-in-emacs-version--30)
+  - [Installation from MELPA](#installation-from-melpa)
   - [Usage](#usage)
   - [Customizations](#customizations)
     - [Making bufferfile use version control (VC), such as Git, when renaming or deleting files?](#making-bufferfile-use-version-control-vc-such-as-git-when-renaming-or-deleting-files)
@@ -36,14 +36,13 @@ This package provides helper functions to delete and rename buffer files:
 <!-- markdown-toc end -->
 
 
-## Installation
+## Installation from MELPA
 
-### Install with straight (Emacs version < 30)
+To install *bufferfile* from MELPA:
 
-To install `bufferfile` with `straight.el`:
+1. If you haven't already done so, [add MELPA repository to your Emacs configuration](https://melpa.org/#/getting-started).
 
-1. It if hasn't already been done, [add the straight.el bootstrap code](https://github.com/radian-software/straight.el?tab=readme-ov-file#getting-started) to your init file.
-2. Add the following code to the Emacs init file:
+2. Add the following code to your Emacs init file to install *bufferfile* from MELPA:
 ```emacs-lisp
 (use-package bufferfile
   :ensure t
@@ -51,17 +50,6 @@ To install `bufferfile` with `straight.el`:
              :type git
              :host github
              :repo "jamescherti/bufferfile.el"))
-```
-
-### Installing with use-package and :vc (Built-in feature in Emacs version >= 30)
-
-To install `bufferfile` with `use-package` and `:vc` (Emacs >= 30):
-
-``` emacs-lisp
-(use-package bufferfile
-  :ensure t
-  :vc (:url "https://github.com/jamescherti/bufferfile.el"
-       :rev :newest))
 ```
 
 ## Usage
