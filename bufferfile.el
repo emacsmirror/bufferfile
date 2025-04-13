@@ -41,11 +41,7 @@
 ;; Installation from MELPA
 ;; -----------------------
 ;; (use-package bufferfile
-;;   :ensure t
-;;   :straight (bufferfile
-;;              :type git
-;;              :host github
-;;              :repo "jamescherti/bufferfile.el"))
+;;   :ensure t)
 
 ;;; Code:
 
