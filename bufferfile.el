@@ -48,7 +48,7 @@
 (require 'cl-lib)
 (require 'hi-lock)
 
-;; Customizations
+;;; Customizations
 
 (defgroup bufferfile nil
   "Delete or rename buffer files."
