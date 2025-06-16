@@ -167,6 +167,46 @@ Return nil if the buffer is not associated with a file."
        "Ignored because the destination is the same as the source"))
     new-filename))
 
+(defun bufferfile--vc-delete-file (file)
+  "Delete file and mark it as such in the version control system.
+If called interactively, read FILE, defaulting to the current
+buffer's file name if it's under version control."
+  (interactive (list (read-file-name "VC delete file: " nil
+                                     (when (vc-backend buffer-file-name)
+                                       buffer-file-name)
+                                     t)))
+  (setq file (expand-file-name file))
+  (let ((buf (get-file-buffer file))
+        (backend (vc-backend file)))
+    (unless backend
+      (error "File %s is not under version control"
+             (file-name-nondirectory file)))
+    (unless (vc-find-backend-function backend 'delete-file)
+      (error "Deleting files under %s is not supported in VC" backend))
+    (when (and buf (buffer-modified-p buf))
+      (error "Please save or undo your changes before deleting %s" file))
+    (let ((state (vc-state file)))
+      (when (eq state 'edited)
+        (error "Please commit or undo your changes before deleting %s" file))
+      (when (eq state 'conflict)
+        (error "Please resolve the conflicts before deleting %s" file)))
+    (unless (or (file-directory-p file) (null make-backup-files)
+                (not (file-exists-p file)))
+      (with-current-buffer (or buf (find-file-noselect file))
+	      (let ((backup-inhibited nil))
+	        (backup-buffer))))
+    ;; Bind `default-directory' so that the command that the backend
+    ;; runs to remove the file is invoked in the correct context.
+    (let ((default-directory (file-name-directory file)))
+      (vc-call-backend backend 'delete-file file))
+    ;; If the backend hasn't deleted the file itself, let's do it for him.
+    (when (file-exists-p file) (delete-file file))
+    ;; Forget what VC knew about the file.
+    (vc-file-clearprops file)
+    ;; Make sure the buffer is deleted and the *vc-dir* buffers are
+    ;; updated after this.
+    (vc-resynch-buffer file nil t)))
+
 ;;; Rename file
 
 (defun bufferfile--rename-all-buffer-names (old-filename new-filename)
@@ -390,11 +430,8 @@ process."
           (when (file-exists-p filename)
             (if (and bufferfile-use-vc
                      vc-managed-file)
-                (cl-letf (((symbol-function 'yes-or-no-p)
-                           (lambda (&rest _args) t)))
-
-                  ;; VC delete
-                  (vc-delete-file filename))
+                ;; VC delete
+                (bufferfile--vc-delete-file filename)
               ;; Delete
               (delete-file filename)))
 
