@@ -226,6 +226,18 @@ buffer's file name if it's under version control."
     (when (fboundp 'vc-resynch-buffer)
       (funcall 'vc-resynch-buffer file nil t))))
 
+(defun bufferfile--refresh-dired-buffers (directory)
+  "Refresh all Dired buffers visiting DIRECTORY."
+  (when directory
+    (let ((dir (file-name-as-directory (expand-file-name directory))))
+      (dolist (buf (buffer-list))
+        (when (buffer-live-p buf)
+          (with-current-buffer buf
+            (when (and (derived-mode-p 'dired-mode)
+                       (string= (file-name-as-directory default-directory) dir))
+              (ignore-errors
+                (funcall 'dired-revert)))))))))
+
 ;;; Rename file
 
 (defun bufferfile--rename-all-buffer-names (old-filename new-filename)
@@ -334,6 +346,11 @@ is non-nil."
                 (eglot-shutdown server))
               (eglot-ensure))))))
 
+    ;; Refresh the dired buffer
+    (dolist (item (list filename new-filename))
+      (let* ((parent-dir-path (file-name-directory (expand-file-name item))))
+        (bufferfile--refresh-dired-buffers parent-dir-path)))
+
     (run-hook-with-args 'bufferfile-post-rename-functions
                         filename
                         new-filename
@@ -411,8 +428,7 @@ process."
         (let* ((vc-managed-file (when bufferfile-use-vc
                                   (vc-backend filename)))
                (list-buffers (bufferfile--get-list-buffers filename))
-               (parent-dir-path (file-name-directory filename))
-               (parent-dir-buffer (get-buffer parent-dir-path)))
+               (parent-dir-path (file-name-directory filename)))
           (unless parent-dir-path
             (error "Cannot find the parent directory of: %s" filename))
           (dolist (buf list-buffers)
@@ -454,13 +470,13 @@ process."
           ;; Find file first
           (cond
            ((eq bufferfile-delete-switch-to 'parent-directory)
-            (setq parent-dir-buffer (find-file parent-dir-path))
-            (when (buffer-live-p parent-dir-buffer)
-              (with-current-buffer parent-dir-buffer
-                (when (and (derived-mode-p 'dired-mode)
-                           (fboundp 'dired-goto-file))
-                  (dired-goto-file filename)))
-              (switch-to-buffer parent-dir-buffer nil t)))
+            (let ((parent-dir-buffer (find-file parent-dir-path)))
+              (when (buffer-live-p parent-dir-buffer)
+                (with-current-buffer parent-dir-buffer
+                  (when (and (derived-mode-p 'dired-mode)
+                             (fboundp 'dired-goto-file))
+                    (dired-goto-file filename)))
+                (switch-to-buffer parent-dir-buffer nil t))))
 
            ((eq bufferfile-delete-switch-to 'previous-buffer)
             (previous-buffer)))
@@ -476,12 +492,8 @@ process."
           (when bufferfile-verbose
             (bufferfile--message "Deleted: %s" (abbreviate-file-name filename)))
 
-          ;; Refresh the parent directory
-          (when (and (buffer-live-p parent-dir-buffer)
-                     (fboundp 'dired-revert))
-            (with-current-buffer parent-dir-buffer
-              (when (derived-mode-p 'dired-mode)
-                (funcall 'dired-revert))))
+          ;; Refresh dired buffers
+          (bufferfile--refresh-dired-buffers parent-dir-path)
 
           (run-hook-with-args 'bufferfile-post-delete-functions
                               filename
