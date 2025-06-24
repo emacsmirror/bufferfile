@@ -280,16 +280,19 @@ is non-nil."
     (when bufferfile-use-vc
       (require 'vc))
 
-    (if (and bufferfile-use-vc
-             (vc-backend filename))
+    (if (and bufferfile-use-vc (vc-backend filename))
         (progn
-          ;; Rename the file using VC
-          (vc-rename-file filename new-filename)
           (when bufferfile-verbose
             (bufferfile--message
              "VC Rename: %s -> %s"
              (abbreviate-file-name filename)
-             (abbreviate-file-name new-filename))))
+             (abbreviate-file-name new-filename)))
+          (when (and ok-if-already-exists (file-exists-p new-filename))
+            ;; If the destination file exists, `vc-rename-file' cannot perform
+            ;; the rename; the destination must be deleted first.
+            (delete-file new-filename))
+          ;; VC Rename
+          (vc-rename-file filename new-filename))
       ;; Rename the file
       (rename-file filename new-filename ok-if-already-exists)
       (when bufferfile-verbose
