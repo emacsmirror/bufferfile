@@ -281,13 +281,8 @@ is non-nil."
   (let (list-buffers)
     (when (and (not ok-if-already-exists)
                (file-exists-p new-filename))
-      (unless (y-or-n-p
-               (format
-                "Destination file '%s' already exists. Do you want to overwrite it?"
-                new-filename))
-        (bufferfile--error
-         "Rename failed: Destination filename already exists: %s"
-         new-filename)))
+      (error "%sDestination file '%s' already exists."
+             bufferfile-message-prefix new-filename))
 
     (setq list-buffers (bufferfile--get-list-buffers filename))
 
@@ -361,13 +356,24 @@ process."
 
   (with-current-buffer buffer
     (let* ((filename (bufferfile--get-buffer-filename))
-           (original-buffer (or (buffer-base-buffer) (current-buffer))))
+           (original-buffer (or (buffer-base-buffer) (current-buffer)))
+           (ok-if-already-exists t))
       (with-current-buffer original-buffer
         (when (buffer-modified-p)
           (let ((save-silently (not bufferfile-verbose)))
             (save-buffer)))
 
         (let ((new-filename (bufferfile--read-dest-file-name filename)))
+          (when (and (not ok-if-already-exists)
+                     (file-exists-p new-filename))
+            (unless (y-or-n-p
+                     (format
+                      "Destination file '%s' already exists. Do you want to overwrite it?"
+                      new-filename))
+              (bufferfile--error
+               "Rename failed: Destination filename already exists: %s"
+               new-filename)))
+
           (bufferfile-rename-file filename new-filename t))))))
 
 ;;; Delete file
