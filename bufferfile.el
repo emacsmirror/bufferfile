@@ -72,6 +72,24 @@ and outcome of the renaming process."
   :type 'boolean
   :group 'bufferfile)
 
+(defcustom bufferfile-delete-switch-to 'parent-directory
+  "Specifies the action taken after deleting a file and killing its buffer.
+
+Possible values are:
+- \\='parent-directory
+  Open the parent directory containing the deleted file.
+
+- \\='previous-buffer
+  Switch back to the previous buffer.
+
+- nil
+  Take no automatic action; allow Emacs to determine the next buffer after
+  deleting the file."
+  :type '(choice (const :tag "Open parent directory" parent-directory)
+                 (const :tag "Switch to previous buffer" previous-buffer)
+                 (const :tag "Do nothing" nil))
+  :group 'bufferfile)
+
 ;;; Variables
 
 (defvar bufferfile-pre-rename-functions nil
@@ -404,14 +422,6 @@ process."
                     (vc-revert-file filename)
                   (bufferfile--error "vc-revert-file has been not declared")))))
 
-          ;; Find file first
-          (when-let* ((dir-buffer (find-file (file-name-directory filename))))
-            (with-current-buffer dir-buffer
-              (when (and (derived-mode-p 'dired-mode)
-                         (fboundp 'dired-goto-file))
-                (dired-goto-file filename)))
-            (switch-to-buffer dir-buffer nil t))
-
           ;; Kill buffer
           (dolist (buf list-buffers)
             (with-current-buffer buf
@@ -429,6 +439,19 @@ process."
                     (let ((inhibit-message t))
                       (eglot-shutdown server))))))
             (kill-buffer buf))
+
+          ;; Find file first
+          (cond
+           ((eq bufferfile-delete-switch-to 'parent-directory)
+            (when-let* ((dir-buffer (find-file (file-name-directory filename))))
+              (with-current-buffer dir-buffer
+                (when (and (derived-mode-p 'dired-mode)
+                           (fboundp 'dired-goto-file))
+                  (dired-goto-file filename)))
+              (switch-to-buffer dir-buffer nil t)))
+
+           ((eq bufferfile-delete-switch-to 'previous-buffer)
+            (previous-buffer)))
 
           (when (file-exists-p filename)
             (if (and bufferfile-use-vc
