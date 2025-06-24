@@ -223,7 +223,8 @@ buffer's file name if it's under version control."
     (vc-file-clearprops file)
     ;; Make sure the buffer is deleted and the *vc-dir* buffers are
     ;; updated after this.
-    (vc-resynch-buffer file nil t)))
+    (when (fboundp 'vc-resynch-buffer)
+      (funcall 'vc-resynch-buffer file nil t))))
 
 ;;; Rename file
 
@@ -401,9 +402,13 @@ process."
                                  (file-name-nondirectory filename)))
         (when bufferfile-use-vc
           (require 'vc))
-        (let ((vc-managed-file (when bufferfile-use-vc
-                                 (vc-backend filename)))
-              (list-buffers (bufferfile--get-list-buffers filename)))
+        (let* ((vc-managed-file (when bufferfile-use-vc
+                                  (vc-backend filename)))
+               (list-buffers (bufferfile--get-list-buffers filename))
+               (parent-dir-path (file-name-directory filename))
+               (parent-dir-buffer (get-buffer parent-dir-path)))
+          (unless parent-dir-path
+            (error "Cannot find the parent directory of: %s" filename))
           (dolist (buf list-buffers)
             (with-current-buffer buf
               (when (buffer-modified-p)
@@ -443,12 +448,13 @@ process."
           ;; Find file first
           (cond
            ((eq bufferfile-delete-switch-to 'parent-directory)
-            (when-let* ((dir-buffer (find-file (file-name-directory filename))))
-              (with-current-buffer dir-buffer
+            (setq parent-dir-buffer (find-file parent-dir-path))
+            (when (buffer-live-p parent-dir-buffer)
+              (with-current-buffer parent-dir-buffer
                 (when (and (derived-mode-p 'dired-mode)
                            (fboundp 'dired-goto-file))
                   (dired-goto-file filename)))
-              (switch-to-buffer dir-buffer nil t)))
+              (switch-to-buffer parent-dir-buffer nil t)))
 
            ((eq bufferfile-delete-switch-to 'previous-buffer)
             (previous-buffer)))
@@ -463,6 +469,13 @@ process."
 
           (when bufferfile-verbose
             (bufferfile--message "Deleted: %s" (abbreviate-file-name filename)))
+
+          ;; Refresh the parent directory
+          (when (and (buffer-live-p parent-dir-buffer)
+                     (fboundp 'dired-revert))
+            (with-current-buffer parent-dir-buffer
+              (when (derived-mode-p 'dired-mode)
+                (funcall 'dired-revert))))
 
           (run-hook-with-args 'bufferfile-post-delete-functions
                               filename
