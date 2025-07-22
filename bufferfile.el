@@ -185,6 +185,23 @@ Return nil if the buffer is not associated with a file."
        "Ignored because the destination is the same as the source"))
     new-filename))
 
+(defun bufferfile--read-dest-file-name-rename (filename ok-if-already-exists)
+  "Prompt for a destination file name different from FILENAME.
+Signal an error if a filename NEWNAME already exists unless OK-IF-ALREADY-EXISTS
+is non-nil."
+  (let ((new-filename (bufferfile--read-dest-file-name filename)))
+    (when (and (not ok-if-already-exists)
+               (file-exists-p new-filename))
+      (unless (y-or-n-p
+               (format
+                "Destination file '%s' already exists. Do you want to overwrite it?"
+                new-filename))
+        (bufferfile--error
+         "Rename failed: Destination filename already exists: %s"
+         new-filename)))
+
+    new-filename))
+
 (defun bufferfile--vc-delete-file (file)
   "Delete file and mark it as such in the version control system.
 If called interactively, read FILE, defaulting to the current
@@ -395,17 +412,9 @@ process."
           (let ((save-silently (not bufferfile-verbose)))
             (save-buffer)))
 
-        (let ((new-filename (bufferfile--read-dest-file-name filename)))
-          (when (and (not ok-if-already-exists)
-                     (file-exists-p new-filename))
-            (unless (y-or-n-p
-                     (format
-                      "Destination file '%s' already exists. Do you want to overwrite it?"
-                      new-filename))
-              (bufferfile--error
-               "Rename failed: Destination filename already exists: %s"
-               new-filename)))
-
+        (let ((new-filename
+               (bufferfile--read-dest-file-name-rename filename
+                                                       ok-if-already-exists)))
           (bufferfile-rename-file filename new-filename t))))))
 
 ;;; Delete file
