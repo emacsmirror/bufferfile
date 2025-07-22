@@ -310,7 +310,7 @@ is non-nil."
   (let (list-buffers)
     (when (and (not ok-if-already-exists)
                (file-exists-p new-filename))
-      (error "%sDestination file '%s' already exists."
+      (error "%sDestination file '%s' already exists"
              bufferfile-message-prefix new-filename))
 
     (setq list-buffers (bufferfile--get-list-buffers filename))
