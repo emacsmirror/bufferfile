@@ -236,12 +236,13 @@ buffer's file name if it's under version control."
             (when (and (derived-mode-p 'dired-mode)
                        (string= (file-name-as-directory default-directory) dir))
               (ignore-errors
-                (funcall 'dired-revert)))))))))
+                (when (fboundp 'dired-revert)
+                  (funcall 'dired-revert))))))))))
 
 ;;; Rename file
 
-(defun bufferfile--rename-all-buffer-names (old-filename new-filename)
-  "Update buffer names to reflect the renaming of a file.
+(defun bufferfile--rename-all-buffers (old-filename new-filename)
+  "Update buffer names and files they are visiting to reflect the renaming.
 OLD-FILENAME and NEW-FILENAME are absolute paths as returned by
 `expand-file-name'.
 
@@ -251,28 +252,44 @@ NEW-FILENAME.
 This includes indirect buffers whose names are derived from the old filename."
   (setq old-filename (expand-file-name old-filename))
   (setq new-filename (expand-file-name new-filename))
-  (let ((basename (file-name-nondirectory old-filename))
-        (new-basename (file-name-nondirectory new-filename)))
+
+  (let ((indirect-buffers '()))
+    ;; Update the file name associated with buffers visiting files
     (dolist (buf (buffer-list))
       (when (buffer-live-p buf)
         (with-current-buffer buf
-          (when-let* ((base-buffer (buffer-base-buffer)))
-            ;; Indirect buffer
-            (let* ((base-buffer-filename
-                    (let ((file-name (buffer-file-name base-buffer)))
-                      (when file-name
-                        (expand-file-name file-name)))))
-              (when (and base-buffer-filename
-                         (string= (file-truename new-filename)
-                                  (file-truename base-buffer-filename)))
-                (let ((indirect-buffer-name (buffer-name)))
-                  (let* ((new-buffer-name (concat new-basename
-                                                  (substring
-                                                   indirect-buffer-name
-                                                   (length basename)))))
-                    (when (string-prefix-p basename indirect-buffer-name)
-                      (when new-buffer-name
-                        (rename-buffer new-buffer-name t)))))))))))))
+          (let ((base-buffer (buffer-base-buffer)))
+            (if base-buffer
+                ;; Indirect buffer (clone)
+                (when (buffer-file-name base-buffer)
+                  (push buf indirect-buffers))
+              ;; File-visiting buffer
+              (when (and buffer-file-name
+                         (string= (file-truename buffer-file-name)
+                                  (file-truename old-filename)))
+                (set-visited-file-name new-filename t t)))))))
+
+    ;; Update the names of indirect (clone) buffers associated with buffers
+    ;; visiting the renamed files.
+    (when indirect-buffers
+      (let ((basename (file-name-nondirectory old-filename))
+            (new-basename (file-name-nondirectory new-filename)))
+        (dolist (buf indirect-buffers)
+          (with-current-buffer buf
+            (when-let* ((base-buffer (buffer-base-buffer)))
+              (let ((base-buffer-filename
+                     (let ((file-name (buffer-file-name base-buffer)))
+                       (when file-name
+                         (expand-file-name file-name))))
+                    (indirect-buffer-name (buffer-name)))
+                (when (and base-buffer-filename
+                           (string= (file-truename base-buffer-filename)
+                                    (file-truename new-filename)))
+                  (when (string-prefix-p basename indirect-buffer-name)
+                    (rename-buffer (concat new-basename
+                                           (substring indirect-buffer-name
+                                                      (length basename)))
+                                   t)))))))))))
 
 (defun bufferfile-rename-file (filename
                                new-filename
@@ -326,10 +343,8 @@ is non-nil."
                              (abbreviate-file-name filename)
                              (abbreviate-file-name new-filename))))
 
-    (set-visited-file-name new-filename t t)
-
     ;; Update all buffers pointing to the old filename Broken
-    (bufferfile--rename-all-buffer-names filename new-filename)
+    (bufferfile--rename-all-buffers filename new-filename)
 
     (dolist (buf list-buffers)
       (with-current-buffer buf
