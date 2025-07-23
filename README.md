@@ -68,6 +68,8 @@ To install *bufferfile* from MELPA:
 - To delete the current buffer's file and associated buffers, run: `M-x bufferfile-delete`
   (You will be asked to confirm the deletion. If confirmed, the file will be removed from disk, and all associated buffers, including indirect buffers, will be killed.)
 
+- To copy the current buffer's file, run: `M-x bufferfile-copy`
+
 ## Customizations
 
 ### How to make Dired use bufferfile to rename files
