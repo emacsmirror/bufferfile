@@ -163,12 +163,14 @@ Return nil if the buffer is not associated with a file."
 
         (expand-file-name filename)))))
 
-(defun bufferfile--read-dest-file-name (filename)
-  "Prompt for a destination file name different from FILENAME."
+(defun bufferfile--read-dest-file-name (filename prompt-prefix)
+  "Prompt for a destination file name different from FILENAME.
+PROMPT-PREFIX is the prefix before the prompt."
   (let* ((basename (file-name-nondirectory filename))
          (new-filename (read-file-name
-                        (format "%sCopy '%s' to: "
+                        (format "%s%s'%s' to: "
                                 bufferfile-message-prefix
+                                prompt-prefix
                                 basename)
                         (file-name-directory filename)
                         nil
@@ -189,7 +191,7 @@ Return nil if the buffer is not associated with a file."
   "Prompt for a destination file name different from FILENAME.
 Signal an error if a filename NEWNAME already exists unless OK-IF-ALREADY-EXISTS
 is non-nil."
-  (let ((new-filename (bufferfile--read-dest-file-name filename)))
+  (let ((new-filename (bufferfile--read-dest-file-name filename "Rename ")))
     (when (and (not ok-if-already-exists)
                (file-exists-p new-filename))
       (unless (y-or-n-p
@@ -541,7 +543,8 @@ process."
           (let ((save-silently (not bufferfile-verbose)))
             (save-buffer)))
 
-        (let ((new-filename (bufferfile--read-dest-file-name filename)))
+        (let ((new-filename (bufferfile--read-dest-file-name filename
+                                                             "Copy ")))
           (when bufferfile-verbose
             (bufferfile--message "Copy: %s -> %s"
                                  (abbreviate-file-name filename)
