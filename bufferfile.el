@@ -90,6 +90,18 @@ Possible values are:
                  (const :tag "Do nothing" nil))
   :group 'bufferfile)
 
+(defcustom bufferfile-dired-integration t
+  "Whether to enable Dired integration.
+Dired must be loaded for this option to have any effect."
+  :type 'boolean
+  :group 'bufferfile)
+
+(defcustom bufferfile-eglot-integration t
+  "Whether to enable Eglot integration.
+Eglot must be loaded for this option to have any effect."
+  :type 'boolean
+  :group 'bufferfile)
+
 ;;; Variables
 
 (defvar bufferfile-pre-rename-functions nil
@@ -369,15 +381,16 @@ is non-nil."
       (require 'vc))
 
     ;; Dired
-    (let ((parent-dir-path (file-name-directory (expand-file-name filename)))
-          (filename-truename (file-truename filename)))
-      (dolist (buf (bufferfile--get-dired-buffers-visiting parent-dir-path))
-        (with-current-buffer buf
-          (when (fboundp 'dired-get-file-for-visit)
-            (let ((file (funcall 'dired-get-file-for-visit)))
-              (setq-local bufferfile--dired-file-selected
-                          (and file (string= (file-truename file)
-                                             filename-truename))))))))
+    (when bufferfile-dired-integration
+      (let ((parent-dir-path (file-name-directory (expand-file-name filename)))
+            (filename-truename (file-truename filename)))
+        (dolist (buf (bufferfile--get-dired-buffers-visiting parent-dir-path))
+          (with-current-buffer buf
+            (when (fboundp 'dired-get-file-for-visit)
+              (let ((file (funcall 'dired-get-file-for-visit)))
+                (setq-local bufferfile--dired-file-selected
+                            (and file (string= (file-truename file)
+                                               filename-truename)))))))))
 
     (if (and bufferfile-use-vc (vc-backend filename))
         (progn
@@ -402,29 +415,31 @@ is non-nil."
     ;; Update all buffers pointing to the old filename Broken
     (bufferfile--rename-all-buffers filename new-filename)
 
-    (dolist (buf list-buffers)
-      (with-current-buffer buf
-        ;; Fix Eglot
-        (when (and (fboundp 'eglot-current-server)
-                   (fboundp 'eglot-shutdown)
-                   (fboundp 'eglot-managed-p)
-                   (fboundp 'eglot-ensure)
-                   (eglot-managed-p))
-          (let ((server (eglot-current-server)))
-            (when server
-              ;; Restart eglot
-              (let ((inhibit-message t))
-                (eglot-shutdown server))
-              (eglot-ensure))))))
+    (when bufferfile-eglot-integration
+      (dolist (buf list-buffers)
+        (with-current-buffer buf
+          ;; Fix Eglot
+          (when (and (fboundp 'eglot-current-server)
+                     (fboundp 'eglot-shutdown)
+                     (fboundp 'eglot-managed-p)
+                     (fboundp 'eglot-ensure)
+                     (funcall 'eglot-managed-p))
+            (let ((server (funcall 'eglot-current-server)))
+              (when server
+                ;; Restart eglot
+                (let ((inhibit-message t))
+                  (funcall 'eglot-shutdown server))
+                (funcall 'eglot-ensure)))))))
 
-    ;; Refresh previous directory (special case: moving files)
-    ;; TODO: check if the directory if filename is different from new-filename
-    (let ((parent-dir-path (file-name-directory (expand-file-name filename))))
-      (bufferfile--refresh-dired-buffers parent-dir-path))
+    (when bufferfile-dired-integration
+      ;; Refresh previous directory (special case: moving files)
+      ;; TODO: check if the directory if filename is different from new-filename
+      (let ((parent-dir-path (file-name-directory (expand-file-name filename))))
+        (bufferfile--refresh-dired-buffers parent-dir-path))
 
-    ;; Refresh the dired buffer
-    (let ((parent-dir-path (file-name-directory (expand-file-name new-filename))))
-      (bufferfile--refresh-dired-buffers parent-dir-path new-filename))
+      ;; Refresh the dired buffer
+      (let ((parent-dir-path (file-name-directory (expand-file-name new-filename))))
+        (bufferfile--refresh-dired-buffers parent-dir-path new-filename)))
 
     (run-hook-with-args 'bufferfile-post-rename-functions
                         filename
@@ -517,22 +532,23 @@ process."
                   (bufferfile--error "'vc-revert-file' has not been declared")))))
 
           ;; Kill buffer
-          (dolist (buf list-buffers)
-            (with-current-buffer buf
-              (when (and (fboundp 'eglot-current-server)
-                         (fboundp 'eglot-shutdown)
-                         (fboundp 'eglot-managed-p)
-                         (eglot-managed-p))
-                (let ((server (eglot-current-server)))
-                  (when server
-                    ;; Do not display errors such as:
-                    ;; [jsonrpc] (warning) Sentinel for EGLOT
-                    ;; (ansible-unused/(python-mode python-ts-mode)) still
-                    ;; hasn't run, deleting it!
-                    ;; [jsonrpc] Server exited with status 9
-                    (let ((inhibit-message t))
-                      (eglot-shutdown server))))))
-            (kill-buffer buf))
+          (when bufferfile-eglot-integration
+            (dolist (buf list-buffers)
+              (with-current-buffer buf
+                (when (and (fboundp 'eglot-current-server)
+                           (fboundp 'eglot-shutdown)
+                           (fboundp 'eglot-managed-p)
+                           (funcall 'eglot-managed-p))
+                  (let ((server (funcall 'eglot-current-server)))
+                    (when server
+                      ;; Do not display errors such as:
+                      ;; [jsonrpc] (warning) Sentinel for EGLOT
+                      ;; (ansible-unused/(python-mode python-ts-mode)) still
+                      ;; hasn't run, deleting it!
+                      ;; [jsonrpc] Server exited with status 9
+                      (let ((inhibit-message t))
+                        (funcall 'eglot-shutdown server))))))
+              (kill-buffer buf)))
 
           ;; Find file first
           (cond
@@ -560,7 +576,8 @@ process."
             (bufferfile--message "Deleted: %s" (abbreviate-file-name filename)))
 
           ;; Refresh dired buffers
-          (bufferfile--refresh-dired-buffers parent-dir-path)
+          (when bufferfile-dired-integration
+            (bufferfile--refresh-dired-buffers parent-dir-path))
 
           (run-hook-with-args 'bufferfile-post-delete-functions
                               filename
