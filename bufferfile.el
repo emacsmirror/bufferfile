@@ -289,12 +289,31 @@ buffer."
           (ignore-errors
             (funcall 'dired-revert)))
 
-        (when (and goto-file
-                   (fboundp 'dired-goto-file)
-                   bufferfile--dired-file-selected)
-          (when bufferfile-verbose
-            (bufferfile--message "dired-goto-file: %s" goto-file))
-          (funcall 'dired-goto-file goto-file))))))
+        ;; (when (and goto-file
+        ;;            (fboundp 'dired-goto-file)
+        ;;            bufferfile--dired-file-selected)
+        ;;   (when bufferfile-verbose
+        ;;     (bufferfile--message "dired-goto-file: %s" goto-file))
+        ;;   (funcall 'dired-goto-file goto-file))
+        )))
+
+  ;; Walk windows
+  (walk-windows
+   (lambda (window)
+     (when window
+       (with-selected-window window
+         (when (derived-mode-p 'dired-mode)
+           (bufferfile--message "TESTTESTdired-goto-file: %s" goto-file)
+           (when (and goto-file
+                      (fboundp 'dired-goto-file)
+                      bufferfile--dired-file-selected)
+             (when bufferfile-verbose
+               (bufferfile--message "dired-goto-file: %s" goto-file))
+             (funcall 'dired-goto-file goto-file))))))
+   ;; Exclude the minibuffer
+   nil
+   ;; Apply to all frames
+   t))
 
 ;;; Rename file
 
