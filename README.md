@@ -24,7 +24,7 @@ The functions above also ensures that any modified buffers are saved prior to ex
   - [Installation from MELPA](#installation-from-melpa)
   - [Usage](#usage)
   - [Customizations](#customizations)
-    - [How to make dired use bufferfile to rename files](#how-to-make-dired-use-bufferfile-to-rename-files)
+    - [How to make Dired use bufferfile to rename files](#how-to-make-dired-use-bufferfile-to-rename-files)
     - [Making bufferfile use version control (VC), such as Git, when renaming or deleting files?](#making-bufferfile-use-version-control-vc-such-as-git-when-renaming-or-deleting-files)
     - [Usage](#usage-1)
     - [Hook functions](#hook-functions)
@@ -70,7 +70,7 @@ To install *bufferfile* from MELPA:
 
 ## Customizations
 
-### How to make dired use bufferfile to rename files
+### How to make Dired use bufferfile to rename files
 
 By default, Dired's rename operation (`R`) updates the file on disk but may not correctly update any buffers visiting the file, especially for renamed files with indirect (clone) buffers or open in multiple windows. This can lead to inconsistencies between the buffer state and the file system.
 
