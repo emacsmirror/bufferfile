@@ -411,7 +411,17 @@ is non-nil."
                             (and file (string= (file-truename file)
                                                filename-truename)))))))))
 
-    (if (and bufferfile-use-vc (vc-backend filename))
+    (if (and bufferfile-use-vc
+             (vc-backend filename)
+             (let ((root1
+                    (let ((default-directory (file-name-directory filename)))
+                      (vc-root-dir)))
+                   (root2
+                    (let ((default-directory (file-name-directory new-filename)))
+                      (vc-root-dir))))
+               (and root1
+                    root2
+                    (string= root1 root2))))
         (progn
           (when bufferfile-verbose
             (bufferfile--message
