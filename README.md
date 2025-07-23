@@ -72,15 +72,15 @@ To install *bufferfile* from MELPA:
 
 ### How to make Dired use bufferfile to rename files
 
-By default, Dired's rename operation (`R`) updates the file on disk but may not correctly update any buffers visiting the file, especially for renamed files with indirect (clone) buffers or open in multiple windows. This can lead to inconsistencies between the buffer state and the file system.
+By default, Dired's rename operation (`R`) updates the file on disk but may not correctly update any buffers visiting the file, especially for renamed files with indirect (clone) buffers.
 
-To address this, you can override Dired's rename keybinding (`R`) to use `bufferfile-dired-do-rename`, which uses bufferfile rename functions internally. This ensures that all associated buffers, including indirect ones, are properly updated after the rename operation.
+To address this, you can override Dired's rename keybinding (`R`) to use `bufferfile-dired-do-rename`, which uses bufferfile rename functions. This ensures that all associated buffers, including indirect ones, are properly updated after the rename operation:
 
 ```elisp
 ;; Override Dired's rename behavior to use bufferfile rename functions,
-  ;; ensuring buffers visiting the renamed file are updated accordingly.
-  (with-eval-after-load 'dired
-    (define-key dired-mode-map (kbd "R") #'bufferfile-dired-do-rename))
+;; ensuring buffers visiting the renamed file are updated accordingly.
+(with-eval-after-load 'dired
+  (define-key dired-mode-map (kbd "R") #'bufferfile-dired-do-rename))
 ```
 
 ### Making bufferfile use version control (VC), such as Git, when renaming or deleting files?
