@@ -24,6 +24,7 @@ The functions above also ensures that any modified buffers are saved prior to ex
   - [Installation from MELPA](#installation-from-melpa)
   - [Usage](#usage)
   - [Customizations](#customizations)
+    - [How to make dired use bufferfile to rename files](#how-to-make-dired-use-bufferfile-to-rename-files)
     - [Making bufferfile use version control (VC), such as Git, when renaming or deleting files?](#making-bufferfile-use-version-control-vc-such-as-git-when-renaming-or-deleting-files)
     - [Usage](#usage-1)
     - [Hook functions](#hook-functions)
@@ -56,13 +57,7 @@ To install *bufferfile* from MELPA:
   (bufferfile-use-vc nil)
 
   ;; Specifies the action taken after deleting a file and killing its buffer.
-  (bufferfile-delete-switch-to 'parent-directory)
-
-  :config
-  ;; Override Dired's rename behavior to use bufferfile rename functions,
-  ;; ensuring buffers visiting the renamed file are updated accordingly.
-  (with-eval-after-load 'dired
-    (define-key dired-mode-map (kbd "R") #'bufferfile-dired-do-rename)))
+  (bufferfile-delete-switch-to 'parent-directory))
 ```
 
 ## Usage
@@ -74,6 +69,19 @@ To install *bufferfile* from MELPA:
   (You will be asked to confirm the deletion. If confirmed, the file will be removed from disk, and all associated buffers, including indirect buffers, will be killed.)
 
 ## Customizations
+
+### How to make dired use bufferfile to rename files
+
+By default, Dired's rename operation (`R`) updates the file on disk but may not correctly update any buffers visiting the file, especially for renamed files with indirect (clone) buffers or open in multiple windows. This can lead to inconsistencies between the buffer state and the file system.
+
+To address this, you can override Dired's rename keybinding (`R`) to use `bufferfile-dired-do-rename`, which uses bufferfile rename functions internally. This ensures that all associated buffers, including indirect ones, are properly updated after the rename operation.
+
+```elisp
+;; Override Dired's rename behavior to use bufferfile rename functions,
+  ;; ensuring buffers visiting the renamed file are updated accordingly.
+  (with-eval-after-load 'dired
+    (define-key dired-mode-map (kbd "R") #'bufferfile-dired-do-rename))
+```
 
 ### Making bufferfile use version control (VC), such as Git, when renaming or deleting files?
 
