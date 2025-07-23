@@ -248,16 +248,17 @@ buffer's file name if it's under version control."
 (defun bufferfile--refresh-dired-buffers (directory)
   "Refresh all Dired buffers visiting DIRECTORY."
   (when directory
-    (let ((dir (file-name-as-directory (file-truename directory))))
+    (let ((dir (file-truename directory)))
       (dolist (buf (buffer-list))
         (when (buffer-live-p buf)
           (with-current-buffer buf
             (when (and (derived-mode-p 'dired-mode)
-                       (string= (file-name-as-directory (file-truename
-                                                         default-directory))
+                       (string= (file-truename default-directory)
                                 dir))
-              (ignore-errors
-                (when (fboundp 'dired-revert)
+              (when (fboundp 'dired-revert)
+                (when bufferfile-verbose
+                  (bufferfile--message "dired-revert: %s" default-directory))
+                (ignore-errors
                   (funcall 'dired-revert))))))))))
 
 ;;; Rename file
