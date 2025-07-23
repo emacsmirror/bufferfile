@@ -111,6 +111,9 @@ Each function receives two arguments: (path list_buffers).")
 (defvar bufferfile-message-prefix "[bufferfile] "
   "Prefix used for messages and errors related to bufferfile operations.")
 
+;; Internal
+(defvar-local bufferfile--dired-file-selected nil)
+
 ;;; Helper functions
 
 (defun bufferfile--error (&rest args)
@@ -165,7 +168,7 @@ Return nil if the buffer is not associated with a file."
 
 (defun bufferfile--read-dest-file-name (filename prompt-prefix)
   "Prompt for a destination file name different from FILENAME.
-PROMPT-PREFIX is the prefix before the prompt."
+PROMPT-PREFIX: The text prepended to the user input prompt."
   (let* ((basename (file-name-nondirectory filename))
          (new-filename (read-file-name
                         (format "%s%s'%s' to: "
@@ -245,21 +248,41 @@ buffer's file name if it's under version control."
     (when (fboundp 'vc-resynch-buffer)
       (funcall 'vc-resynch-buffer file nil t))))
 
-(defun bufferfile--refresh-dired-buffers (directory)
-  "Refresh all Dired buffers visiting DIRECTORY."
+(defun bufferfile--get-dired-buffers-visiting (directory)
+  "Get all Dired buffers visiting DIRECTORY."
+  (let ((result nil))
+    (when directory
+      (let ((dir (file-truename directory)))
+        (dolist (buf (buffer-list))
+          (when (buffer-live-p buf)
+            (with-current-buffer buf
+              (when (and (derived-mode-p 'dired-mode)
+                         (string= (file-truename default-directory)
+                                  dir))
+                (push buf result)))))))
+    result))
+
+(defun bufferfile--refresh-dired-buffers (directory &optional goto-file)
+  "Refresh all Dired buffers visiting DIRECTORY.
+GOTO-FILE, if provided, moves the cursor to this file in each refreshed Dired
+buffer."
+  (when goto-file
+    (setq goto-file (expand-file-name goto-file)))
   (when directory
-    (let ((dir (file-truename directory)))
-      (dolist (buf (buffer-list))
-        (when (buffer-live-p buf)
-          (with-current-buffer buf
-            (when (and (derived-mode-p 'dired-mode)
-                       (string= (file-truename default-directory)
-                                dir))
-              (when (fboundp 'dired-revert)
-                (when bufferfile-verbose
-                  (bufferfile--message "dired-revert: %s" default-directory))
-                (ignore-errors
-                  (funcall 'dired-revert))))))))))
+    (dolist (buf (bufferfile--get-dired-buffers-visiting directory))
+      (with-current-buffer buf
+        (when (fboundp 'dired-revert)
+          (when bufferfile-verbose
+            (bufferfile--message "dired-revert: %s" default-directory))
+          (ignore-errors
+            (funcall 'dired-revert)))
+
+        (when (and goto-file
+                   (fboundp 'dired-goto-file)
+                   bufferfile--dired-file-selected)
+          (when bufferfile-verbose
+            (bufferfile--message "dired-goto-file: %s" goto-file))
+          (funcall 'dired-goto-file goto-file))))))
 
 ;;; Rename file
 
@@ -345,6 +368,17 @@ is non-nil."
     (when bufferfile-use-vc
       (require 'vc))
 
+    ;; Dired
+    (let ((parent-dir-path (file-name-directory (expand-file-name filename)))
+          (filename-truename (file-truename filename)))
+      (dolist (buf (bufferfile--get-dired-buffers-visiting parent-dir-path))
+        (with-current-buffer buf
+          (when (fboundp 'dired-get-file-for-visit)
+            (let ((file (funcall 'dired-get-file-for-visit)))
+              (setq-local bufferfile--dired-file-selected
+                          (and file (string= (file-truename file)
+                                             filename-truename))))))))
+
     (if (and bufferfile-use-vc (vc-backend filename))
         (progn
           (when bufferfile-verbose
@@ -383,10 +417,14 @@ is non-nil."
                 (eglot-shutdown server))
               (eglot-ensure))))))
 
+    ;; Refresh previous directory (special case: moving files)
+    ;; TODO: check if the directory if filename is different from new-filename
+    (let ((parent-dir-path (file-name-directory (expand-file-name filename))))
+      (bufferfile--refresh-dired-buffers parent-dir-path))
+
     ;; Refresh the dired buffer
-    (dolist (item (list filename new-filename))
-      (let* ((parent-dir-path (file-name-directory (expand-file-name item))))
-        (bufferfile--refresh-dired-buffers parent-dir-path)))
+    (let ((parent-dir-path (file-name-directory (expand-file-name new-filename))))
+      (bufferfile--refresh-dired-buffers parent-dir-path new-filename))
 
     (run-hook-with-args 'bufferfile-post-rename-functions
                         filename
@@ -476,7 +514,7 @@ process."
               (with-current-buffer buffer
                 (if (fboundp 'vc-revert-file)
                     (vc-revert-file filename)
-                  (bufferfile--error "vc-revert-file has been not declared")))))
+                  (bufferfile--error "'vc-revert-file' has not been declared")))))
 
           ;; Kill buffer
           (dolist (buf list-buffers)
