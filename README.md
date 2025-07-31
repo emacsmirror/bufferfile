@@ -26,7 +26,6 @@ The functions above also ensures that any modified buffers are saved prior to ex
   - [Customizations](#customizations)
     - [How to make Dired use bufferfile to rename files](#how-to-make-dired-use-bufferfile-to-rename-files)
     - [Making bufferfile use version control (VC), such as Git, when renaming or deleting files?](#making-bufferfile-use-version-control-vc-such-as-git-when-renaming-or-deleting-files)
-    - [Usage](#usage-1)
     - [Hook functions](#hook-functions)
       - [Hooks for Renaming Files](#hooks-for-renaming-files)
       - [Hooks for Deleting Files](#hooks-for-deleting-files)
@@ -92,8 +91,6 @@ To make *bufferfile* use version control (VC) when renaming or deleting files, y
 ``` emacs-lisp
 (setq bufferfile-use-vc t)
 ```
-
-### Usage
 
 ### Hook functions
 
