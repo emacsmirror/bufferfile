@@ -94,10 +94,12 @@ Possible values are:
 
 (defvar bufferfile-dired-integration t
   "Whether to enable Dired integration.
+This refreshes all Dired buffers containing the affected files.
 Dired must be loaded for this option to have any effect.")
 
 (defvar bufferfile-eglot-integration t
   "Whether to enable Eglot integration.
+This reloads Eglot to ensure it references the updated file name.
 Eglot must be loaded for this option to have any effect.")
 
 (defvar bufferfile-pre-rename-functions nil
