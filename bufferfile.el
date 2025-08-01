@@ -129,10 +129,10 @@ Each function receives two arguments: (path list_buffers).")
 
 ;;; Helper functions
 
-(defun bufferfile--error (&rest args)
+(defmacro bufferfile--error (&rest args)
   "Signal an error with `bufferfile-message-prefix' followed by formatted ARGS.
 ARGS are formatted as in `format'."
-  (user-error "%s%s" bufferfile-message-prefix (apply #'format args)))
+  `(user-error "%s%s" bufferfile-message-prefix (format ,@args)))
 
 (defun bufferfile--message (&rest args)
   "Display a message with '[bufferfile]' prepended.
