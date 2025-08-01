@@ -90,19 +90,15 @@ Possible values are:
                  (const :tag "Do nothing" nil))
   :group 'bufferfile)
 
-(defcustom bufferfile-dired-integration t
-  "Whether to enable Dired integration.
-Dired must be loaded for this option to have any effect."
-  :type 'boolean
-  :group 'bufferfile)
-
-(defcustom bufferfile-eglot-integration t
-  "Whether to enable Eglot integration.
-Eglot must be loaded for this option to have any effect."
-  :type 'boolean
-  :group 'bufferfile)
-
 ;;; Variables
+
+(defvar bufferfile-dired-integration t
+  "Whether to enable Dired integration.
+Dired must be loaded for this option to have any effect.")
+
+(defvar bufferfile-eglot-integration t
+  "Whether to enable Eglot integration.
+Eglot must be loaded for this option to have any effect.")
 
 (defvar bufferfile-pre-rename-functions nil
   "Hook run before renaming a file.
