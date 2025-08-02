@@ -592,7 +592,7 @@ process."
                 ;; VC delete
                 (bufferfile--vc-delete-file filename)
               ;; Delete
-              (delete-file filename)))
+              (delete-file filename delete-by-moving-to-trash)))
 
           (when bufferfile-verbose
             (bufferfile--message "Deleted: %s" (abbreviate-file-name filename)))
