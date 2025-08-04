@@ -90,6 +90,12 @@ Possible values are:
                  (const :tag "Do nothing" nil))
   :group 'bufferfile)
 
+(defcustom bufferfile-make-target-directory t
+  "If non-nil, ensure the destination directory exists.
+This applies to file operations such as renaming or copying."
+  :type 'boolean
+  :group 'bufferfile)
+
 ;;; Variables
 
 (defvar bufferfile-dired-integration t
@@ -404,6 +410,11 @@ is non-nil."
                             (and file (string= (file-truename file)
                                                filename-truename)))))))))
 
+    ;; Ensure that the destination directory exists
+    (when bufferfile-make-target-directory
+      (when-let* ((dest-dir (file-name-directory new-filename)))
+        (make-directory dest-dir t)))
+
     (if (and bufferfile-use-vc
              (vc-backend filename)
              (let ((root1
@@ -616,17 +627,25 @@ process."
   (with-current-buffer buffer
     (let* ((filename (bufferfile--get-buffer-filename))
            (original-buffer (or (buffer-base-buffer) (current-buffer))))
+      ;; Save
       (with-current-buffer original-buffer
         (when (buffer-modified-p)
           (let ((save-silently (not bufferfile-verbose)))
             (save-buffer)))
 
+        ;; Prompt user
         (let ((new-filename (bufferfile--read-dest-file-name filename
                                                              "Copy ")))
           (when bufferfile-verbose
             (bufferfile--message "Copy: %s -> %s"
                                  (abbreviate-file-name filename)
                                  (abbreviate-file-name new-filename)))
+
+          ;; Ensure that the destination directory exists
+          (when bufferfile-make-target-directory
+            (when-let* ((dest-dir (file-name-directory new-filename)))
+              (make-directory dest-dir t)))
+
           (copy-file filename new-filename t))))))
 
 ;;; Dired do rename
