@@ -313,6 +313,15 @@ buffer."
 
 ;;; Rename file
 
+(defun bufferfile--generate-buffer-name (&optional newname)
+  "Return a unique buffer name based on NEWNAME or base buffer name.
+Normalizes any trailing <n> suffix. Does not rename the current buffer."
+  (setq newname (or newname (buffer-name (buffer-base-buffer))))
+  (if (string-match "<[0-9]+>\\'" newname)
+      (setq newname (substring newname 0 (match-beginning 0))))
+  (setq newname (generate-new-buffer-name newname))
+  newname)
+
 (defun bufferfile--rename-all-buffers (old-filename new-filename)
   "Update buffer names and files they are visiting to reflect the renaming.
 OLD-FILENAME and NEW-FILENAME are absolute paths as returned by
@@ -325,46 +334,39 @@ This includes indirect buffers whose names are derived from the old filename."
   (setq old-filename (expand-file-name old-filename))
   (setq new-filename (expand-file-name new-filename))
 
-  (let ((indirect-buffers '()))
-    ;; Update the file name associated with buffers visiting files
+  ;; Update the file name associated with buffers visiting files
+  (let (file-visiting-buffers
+        indirect-buffers
+        (old-filename-truename (file-truename old-filename)))
     (dolist (buf (buffer-list))
       (when (buffer-live-p buf)
         (with-current-buffer buf
           (let ((base-buffer (buffer-base-buffer)))
             (if base-buffer
-                ;; Indirect buffer (clone)
-                (when (buffer-file-name base-buffer)
-                  (push buf indirect-buffers))
-              ;; File-visiting buffer
+                (push buf indirect-buffers)
+              (push buf file-visiting-buffers))
+
+            ;; File-visiting buffer
+            (when (not base-buffer)
               (when (and buffer-file-name
                          (string= (file-truename buffer-file-name)
-                                  (file-truename old-filename)))
+                                  old-filename-truename))
                 (set-visited-file-name new-filename t t)))))))
 
     ;; Update the names of file visiting buffer and indirect buffers (clones)
     ;; associated with buffers visiting the renamed files.
-    (when indirect-buffers
-      (let ((basename (file-name-nondirectory old-filename))
-            (new-basename (file-name-nondirectory new-filename)))
-        (dolist (buf indirect-buffers)
-          (when (buffer-live-p buf)
-            (with-current-buffer buf
-              (let ((base-buffer (buffer-base-buffer)))
-                (let ((base-buffer-filename
-                       (if base-buffer
-                           (when-let* ((file-name (buffer-file-name base-buffer)))
-                             (expand-file-name file-name))
-                         (when-let* ((file-name (buffer-file-name buf)))
-                           (expand-file-name file-name))))
-                      (buffer-name (buffer-name)))
-                  (when (and base-buffer-filename
-                             (string= (file-truename base-buffer-filename)
-                                      (file-truename new-filename)))
-                    (when (string-prefix-p basename buffer-name)
-                      (rename-buffer (concat new-basename
-                                             (substring buffer-name
-                                                        (length basename)))
-                                     t))))))))))))
+    (let ((basename (file-name-nondirectory old-filename))
+          (new-basename (file-name-nondirectory new-filename))
+          (new-filename-truename (file-truename new-filename)))
+      (dolist (buf indirect-buffers)
+        (with-current-buffer buf
+          (when-let* ((base-buffer (buffer-base-buffer)))
+            (let ((base-buffer-filename (buffer-file-name base-buffer))
+                  (buffer-name (buffer-name)))
+              (when (and base-buffer-filename
+                         (string= (file-truename base-buffer-filename)
+                                  new-filename-truename))
+                (rename-buffer (bufferfile--generate-buffer-name) t)))))))))
 
 (defun bufferfile-rename-file (filename
                                new-filename
