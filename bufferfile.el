@@ -510,6 +510,34 @@ process."
                                                        ok-if-already-exists)))
           (bufferfile-rename-file filename new-filename t))))))
 
+;;; Dired do rename
+
+(defun bufferfile-dired-do-rename (&optional arg)
+  "Rename the current file or all marked files in Dired.
+ARG is the same argument as `dired-do-rename'.
+If one file is marked, delegate to `bufferfile-rename'.
+If multiple files are marked, delegate to `dired-do-rename'."
+  (interactive "P")
+  (when (and (derived-mode-p 'dired-mode)
+             (fboundp 'dired-get-marked-files)
+             (fboundp 'dired-post-do-command))
+    (let* ((marked-files (dired-get-marked-files nil arg))
+           new-filename
+           old-filename)
+      (if (> (length marked-files) 1)
+          (when (fboundp 'dired-do-rename)
+            (dired-do-rename arg))
+        (progn
+          (when (or (not marked-files) (= (length marked-files) 0))
+            (user-error "You need to select at least one file"))
+
+          (setq old-filename (car marked-files))
+          (setq new-filename
+                (bufferfile--read-dest-file-name-rename old-filename t))
+
+          (when new-filename
+            (bufferfile-rename-file old-filename new-filename t)))))))
+
 ;;; Delete file
 
 ;;;###autoload
@@ -648,35 +676,13 @@ process."
             (when-let* ((dest-dir (file-name-directory new-filename)))
               (make-directory dest-dir t)))
 
-          (copy-file filename new-filename t))))))
+          (copy-file filename new-filename t)
 
-;;; Dired do rename
-
-(defun bufferfile-dired-do-rename (&optional arg)
-  "Rename the current file or all marked files in Dired.
-ARG is the same argument as `dired-do-rename'.
-If one file is marked, delegate to `bufferfile-rename'.
-If multiple files are marked, delegate to `dired-do-rename'."
-  (interactive "P")
-  (when (and (derived-mode-p 'dired-mode)
-             (fboundp 'dired-get-marked-files)
-             (fboundp 'dired-post-do-command))
-    (let* ((marked-files (dired-get-marked-files nil arg))
-           new-filename
-           old-filename)
-      (if (> (length marked-files) 1)
-          (when (fboundp 'dired-do-rename)
-            (dired-do-rename arg))
-        (progn
-          (when (or (not marked-files) (= (length marked-files) 0))
-            (user-error "You need to select at least one file"))
-
-          (setq old-filename (car marked-files))
-          (setq new-filename
-                (bufferfile--read-dest-file-name-rename old-filename t))
-
-          (when new-filename
-            (bufferfile-rename-file old-filename new-filename t)))))))
+          ;; Refresh dired buffers
+          (when bufferfile-dired-integration
+            ;; Refresh the dired buffer
+            (let ((parent-dir-path (file-name-directory (expand-file-name new-filename))))
+              (bufferfile--refresh-dired-buffers parent-dir-path new-filename))))))))
 
 ;;; Provide
 (provide 'bufferfile)
