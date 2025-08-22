@@ -136,6 +136,7 @@ Each function receives two arguments: (path list_buffers).")
 (defmacro bufferfile--error (&rest args)
   "Signal an error with `bufferfile-message-prefix' followed by formatted ARGS.
 ARGS are formatted as in `format'."
+  (declare (indent 0) (debug t))
   `(user-error "%s%s" bufferfile-message-prefix (format ,@args)))
 
 (defun bufferfile--message (&rest args)
