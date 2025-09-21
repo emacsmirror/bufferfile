@@ -14,6 +14,8 @@ This package provides helper functions to delete, rename, or copy buffer files:
 
 The functions above also ensures that any modified buffers are saved prior to executing operations like renaming, deleting, or copying.
 
+If this enhances your workflow, please show your support by **⭐ starring bufferfile.el on GitHub** to help more Emacs users discover its benefits.
+
 (To make *bufferfile* use version control when renaming or deleting files, you can set the variable `bufferfile-use-vc` to t. This ensures that file operations within *bufferfile* interact with the version control system, preserving history and tracking changes properly.)
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
