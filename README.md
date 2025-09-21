@@ -3,7 +3,7 @@
 [![MELPA](https://melpa.org/packages/bufferfile-badge.svg)](https://melpa.org/#/bufferfile)
 [![MELPA Stable](https://stable.melpa.org/packages/bufferfile-badge.svg)](https://stable.melpa.org/#/bufferfile)
 ![License](https://img.shields.io/github/license/jamescherti/bufferfile.el)
-![](https://raw.githubusercontent.com/jamescherti/bufferfile.el/main/.images/made-for-gnu-emacs.svg)
+![](https://jamescherti.com/misc/made-for-gnu-emacs.svg)
 
 ## Introduction
 
@@ -20,20 +20,20 @@ The functions above also ensures that any modified buffers are saved prior to ex
 ## Table of Contents
 
 - [bufferfile.el - Rename, Delete, or Copy Files and Associated Buffers (e.g., clones/indirect buffers)](#bufferfileel---rename-delete-or-copy-files-and-associated-buffers-eg-clonesindirect-buffers)
-  - [Introduction](#introduction)
-  - [Installation from MELPA](#installation-from-melpa)
-  - [Usage](#usage)
-  - [Customizations](#customizations)
-    - [How to make Dired use bufferfile to rename files](#how-to-make-dired-use-bufferfile-to-rename-files)
-    - [Making bufferfile use version control (VC), such as Git, when renaming or deleting files?](#making-bufferfile-use-version-control-vc-such-as-git-when-renaming-or-deleting-files)
-    - [Hook functions](#hook-functions)
-      - [Hooks for Renaming Files](#hooks-for-renaming-files)
-      - [Hooks for Deleting Files](#hooks-for-deleting-files)
-  - [Frequently asked questions](#frequently-asked-questions)
-    - [What is the difference between bufferfile and the built-in Emacs rename and delete functions?](#what-is-the-difference-between-bufferfile-and-the-built-in-emacs-rename-and-delete-functions)
-  - [Author and License](#author-and-license)
-  - [Testimonials](#testimonials)
-  - [Links](#links)
+    - [Introduction](#introduction)
+    - [Installation from MELPA](#installation-from-melpa)
+    - [Usage](#usage)
+    - [Customizations](#customizations)
+        - [How to make Dired use bufferfile to rename files](#how-to-make-dired-use-bufferfile-to-rename-files)
+        - [Making bufferfile use version control (VC), such as Git, when renaming or deleting files?](#making-bufferfile-use-version-control-vc-such-as-git-when-renaming-or-deleting-files)
+        - [Hook functions](#hook-functions)
+            - [Hooks for Renaming Files](#hooks-for-renaming-files)
+            - [Hooks for Deleting Files](#hooks-for-deleting-files)
+    - [Frequently asked questions](#frequently-asked-questions)
+        - [What is the difference between bufferfile and the built-in Emacs rename and delete functions?](#what-is-the-difference-between-bufferfile-and-the-built-in-emacs-rename-and-delete-functions)
+    - [Author and License](#author-and-license)
+    - [Testimonials](#testimonials)
+    - [Links](#links)
 
 <!-- markdown-toc end -->
 
