@@ -51,7 +51,6 @@ To install *bufferfile* from MELPA:
 2. Add the following code to your Emacs init file to install *bufferfile* from MELPA:
 ```emacs-lisp
 (use-package bufferfile
-  :ensure t
   :commands (bufferfile-copy
              bufferfile-rename
              bufferfile-delete)

@@ -40,8 +40,7 @@
 ;;
 ;; Installation from MELPA
 ;; -----------------------
-;; (use-package bufferfile
-;;   :ensure t)
+;; (use-package bufferfile)
 
 ;;; Code:
 
