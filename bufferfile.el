@@ -106,6 +106,11 @@ Dired must be loaded for this option to have any effect.")
 This reloads Eglot to ensure it references the updated file name.
 Eglot must be loaded for this option to have any effect.")
 
+(defvar bufferfile-recentf-integration t
+  "Whether to enable recentf integration.
+This updates `recentf-list' to ensure it references the updated file name.
+`recentf-mode' must be enabled for this option to have any effect.")
+
 (defvar bufferfile-pre-rename-functions nil
   "Hook run before renaming a file.
 Each function receives three arguments: (previous-path new-path list-buffers).")
@@ -203,7 +208,7 @@ PROMPT-PREFIX: The text prepended to the user input prompt."
     (when (string= (file-truename filename)
                    (file-truename new-filename))
       (bufferfile--error
-       "Ignored because the destination is the same as the source"))
+        "Ignored because the destination is the same as the source"))
     new-filename))
 
 (defun bufferfile--read-dest-file-name-rename (filename ok-if-already-exists)
@@ -218,8 +223,8 @@ is non-nil."
                 "Destination file '%s' already exists. Do you want to overwrite it?"
                 new-filename))
         (bufferfile--error
-         "Rename failed: Destination filename already exists: %s"
-         new-filename)))
+          "Rename failed: Destination filename already exists: %s"
+          new-filename)))
 
     new-filename))
 
@@ -466,6 +471,25 @@ non-nil."
     ;; Update all buffers pointing to the old filename Broken
     (bufferfile--rename-all-buffers filename new-filename)
 
+    (when (and bufferfile-recentf-integration
+               (bound-and-true-p recentf-mode)
+               (boundp 'recentf-list)
+               (fboundp 'recentf-string-member)
+               (fboundp 'recentf-add-file))
+      (let* ((expanded (expand-file-name filename))
+             (truename (file-truename expanded))
+             (list-targets (list filename
+                                 expanded
+                                 (abbreviate-file-name expanded)
+                                 truename
+                                 (abbreviate-file-name truename))))
+        (dolist (target list-targets)
+          (let ((member (recentf-string-member target recentf-list)))
+            (when member
+              (setq recentf-list (delq (car member) recentf-list))))))
+
+      (recentf-add-file new-filename))
+
     (when bufferfile-eglot-integration
       (dolist (buf list-buffers)
         (with-current-buffer buf
@@ -499,7 +523,9 @@ non-nil."
 
 ;;;###autoload
 (defun bufferfile-rename (&optional buffer)
-  "Rename the current file of that BUFFER is visiting.
+  "Rename the file visited by the current buffer.
+If BUFFER is provided, operate on the file visited by that buffer instead.
+
 This command updates:
 - The file name on disk,
 - the buffer name,
@@ -558,7 +584,7 @@ If multiple files are marked, delegate to `dired-do-rename'."
 
 ;;;###autoload
 (defun bufferfile-delete (&optional buffer)
-  "Kill BUFFER and delete file associated with it.
+  "Kill the current buffer and delete the file associated with it.
 Delete the file associated with a buffer and kill all buffers visiting the file,
 including indirect buffers or clones.
 If BUFFER is nil, operate on the current buffer.
