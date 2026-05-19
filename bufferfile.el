@@ -466,6 +466,7 @@ non-nil."
     ;; mid-process.
     (let ((inhibit-quit t))
       (if (and bufferfile-use-vc
+               (vc-registered filename)
                (vc-backend filename)
                (let ((root1
                       (let ((default-directory (file-name-directory filename)))
@@ -624,7 +625,8 @@ This function performs a comprehensive cleanup of FILENAME by:
     (require 'vc))
 
   (setq filename (expand-file-name filename))
-  (let* ((vc-managed-file (when bufferfile-use-vc
+  (let* ((vc-managed-file (when (and bufferfile-use-vc
+                                     (vc-registered filename))
                             (vc-backend filename)))
          (list-buffers (bufferfile--get-list-buffers filename))
          (parent-dir-path (file-name-directory filename)))
@@ -684,8 +686,7 @@ This function performs a comprehensive cleanup of FILENAME by:
 
       ;; Delete file
       (when (file-exists-p filename)
-        (if (and bufferfile-use-vc
-                 vc-managed-file)
+        (if vc-managed-file
             ;; VC delete
             (bufferfile--vc-delete-file filename)
           ;; Delete
