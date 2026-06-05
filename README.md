@@ -1,4 +1,4 @@
-# bufferfile.el - Rename, Delete, or Copy Files and Associated Buffers (e.g., clones/indirect buffers)
+# bufferfile.el - Rename, Delete, or Copy Files and Associated Buffers (e.g., clones/indirect buffers) and buffer-local variables referencing the file (such as Eglot, Dired buffers, or the `recentf` list, are correctly updated)
 ![Build Status](https://github.com/jamescherti/bufferfile.el/actions/workflows/ci.yml/badge.svg)
 [![MELPA](https://melpa.org/packages/bufferfile-badge.svg)](https://melpa.org/#/bufferfile)
 [![MELPA Stable](https://stable.melpa.org/packages/bufferfile-badge.svg)](https://stable.melpa.org/#/bufferfile)
