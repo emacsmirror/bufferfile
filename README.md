@@ -1,4 +1,4 @@
-# bufferfile: Rename, delete, or copy files and associated Emacs buffers (e.g., clones/indirect buffers) and buffer-local variables and features referencing the file path (such as Eglot, Dired buffers, or the `recentf` list, are correctly updated)
+# bufferfile: Rename, delete, or copy files and update their associated Emacs buffers (including clones and indirect buffers), buffer-local variables, and features that reference the file path, such as Eglot, Dired buffers, and the recentf list
 ![Build Status](https://github.com/jamescherti/bufferfile.el/actions/workflows/ci.yml/badge.svg)
 [![MELPA](https://melpa.org/packages/bufferfile-badge.svg)](https://melpa.org/#/bufferfile)
 [![MELPA Stable](https://stable.melpa.org/packages/bufferfile-badge.svg)](https://stable.melpa.org/#/bufferfile)
