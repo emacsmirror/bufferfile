@@ -21,27 +21,6 @@ If this enhances your workflow, please show your support by **⭐ starring buffe
 
 (To make *bufferfile* use version control when renaming or deleting files, you can set the variable `bufferfile-use-vc` to t. This ensures that file operations within *bufferfile* interact with the version control system, preserving history and tracking changes properly.)
 
-<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
-## Table of Contents
-
-- [bufferfile.el - Rename, Delete, or Copy Files and Associated Buffers (e.g., clones/indirect buffers)](#bufferfileel---rename-delete-or-copy-files-and-associated-buffers-eg-clonesindirect-buffers)
-  - [Installation from MELPA](#installation-from-melpa)
-  - [Usage](#usage)
-  - [Customizations](#customizations)
-    - [How to make Dired use bufferfile to rename files](#how-to-make-dired-use-bufferfile-to-rename-files)
-    - [Making bufferfile use version control (VC), such as Git, when renaming or deleting files?](#making-bufferfile-use-version-control-vc-such-as-git-when-renaming-or-deleting-files)
-    - [Hook functions](#hook-functions)
-      - [Hooks for Renaming Files](#hooks-for-renaming-files)
-      - [Hooks for Deleting Files](#hooks-for-deleting-files)
-  - [Frequently asked questions](#frequently-asked-questions)
-    - [What is the difference between bufferfile and the built-in Emacs rename and delete functions?](#what-is-the-difference-between-bufferfile-and-the-built-in-emacs-rename-and-delete-functions)
-  - [Author and License](#author-and-license)
-  - [Testimonials](#testimonials)
-  - [Links](#links)
-
-<!-- markdown-toc end -->
-
-
 ## Installation from MELPA
 
 To install *bufferfile* from MELPA:
