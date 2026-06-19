@@ -129,6 +129,11 @@ Dired must be loaded for this option to have any effect.")
 This reloads Eglot to ensure it references the updated file name.
 Eglot must be loaded for this option to have any effect.")
 
+(defvar bufferfile-flymake-integration t
+  "Whether to enable Flymake integration.
+This restarts Flymake to ensure it references the updated file name.
+Flymake must be loaded for this option to have any effect.")
+
 (defvar bufferfile-recentf-integration t
   "Whether to enable recentf integration.
 This updates `recentf-list' to ensure it references the updated file name.
@@ -528,6 +533,16 @@ non-nil."
                   (let ((inhibit-message t))
                     (funcall 'eglot-shutdown server)
                     (funcall 'eglot-ensure))))))))
+
+      (when bufferfile-flymake-integration
+        (dolist (buf list-buffers)
+          (with-current-buffer buf
+            ;; Restart Flymake
+            (when (and (fboundp 'flymake-mode)
+                       (bound-and-true-p flymake-mode))
+              (let ((inhibit-message t))
+                (funcall 'flymake-mode -1)
+                (funcall 'flymake-mode 1))))))
 
       (when bufferfile-dired-integration
         (let ((old-parent-dir (file-name-directory (expand-file-name filename)))
