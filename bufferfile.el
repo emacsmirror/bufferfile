@@ -615,6 +615,7 @@ This function performs a comprehensive cleanup of FILENAME by:
   file is managed by a backend.
 - Shutting down Eglot servers managed by the buffers if
   `bufferfile-eglot-integration' is enabled.
+- Updating `recentf-list' to remove the deleted file.
 - Refreshing Dired buffers for the parent directory.
 - Switching to a new buffer based on `bufferfile-delete-switch-to'."
   (when bufferfile-use-vc
@@ -687,14 +688,32 @@ This function performs a comprehensive cleanup of FILENAME by:
             ;; VC delete
             (bufferfile--vc-delete-file filename)
           ;; Delete
-          (delete-file filename delete-by-moving-to-trash))))
+          (delete-file filename delete-by-moving-to-trash)))
 
-    (when bufferfile-verbose
-      (bufferfile--message "Deleted: %s" (abbreviate-file-name filename)))
+      ;; Update recentf list
+      (when (and bufferfile-recentf-integration
+                 (bound-and-true-p recentf-mode)
+                 (boundp 'recentf-list)
+                 (fboundp 'recentf-string-member))
+        (let* ((expanded (expand-file-name filename))
+               (truename (file-truename expanded))
+               (list-targets (list filename
+                                   expanded
+                                   (abbreviate-file-name expanded)
+                                   truename
+                                   (abbreviate-file-name truename))))
+          (dolist (target list-targets)
+            (let ((member (recentf-string-member target recentf-list)))
+              (when member
+                (setq recentf-list (delq (car member) recentf-list)))))))
 
-    ;; Refresh dired buffers AFTER killing the buffer
-    (when bufferfile-dired-integration
-      (bufferfile--refresh-dired-buffers parent-dir-path))
+      (when bufferfile-verbose
+        (bufferfile--message "Deleted: %s" (abbreviate-file-name filename)))
+
+      ;; Refresh dired buffers AFTER killing the buffer
+      (when bufferfile-dired-integration
+        (let ((parent-dir (file-name-directory (expand-file-name filename))))
+          (bufferfile--refresh-dired-buffers parent-dir))))
 
     (run-hook-with-args 'bufferfile-post-delete-functions
                         filename
