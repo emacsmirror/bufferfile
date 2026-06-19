@@ -314,7 +314,7 @@ buffer's file name if it's under version control."
 (defun bufferfile--refresh-dired-buffers (directory &optional goto-file)
   "Refresh all Dired buffers visiting DIRECTORY.
 GOTO-FILE, if provided, moves the cursor to this file in each refreshed Dired
-buffer."
+buffer, provided it was selected before the file operation."
   (when goto-file
     (setq goto-file (expand-file-name goto-file)))
   (when directory
@@ -340,10 +340,13 @@ buffer."
                                                    default-directory))
                                    dir-truename))
                  (when (and goto-file
+                            bufferfile--dired-file-selected
                             (fboundp 'dired-goto-file))
                    (when bufferfile-verbose
                      (bufferfile--message "dired-goto-file: %s" goto-file))
-                   (funcall 'dired-goto-file goto-file)))))))
+                   (funcall 'dired-goto-file goto-file))
+                 ;; Reset the selection state so subsequent operations start clean
+                 (setq bufferfile--dired-file-selected nil))))))
        ;; Exclude the minibuffer
        nil
        ;; Apply to all frames
@@ -460,6 +463,18 @@ non-nil."
       (when-let* ((dest-dir (file-name-directory new-filename)))
         (make-directory dest-dir t)))
 
+    ;; Track if the file is currently selected in any Dired buffers
+    (when (and (fboundp 'dired-get-filename)
+               bufferfile-dired-integration)
+      (dolist (buf (buffer-list))
+        (with-current-buffer buf
+          (when (derived-mode-p 'dired-mode)
+            (let ((file-at-point (ignore-errors (dired-get-filename nil t))))
+              (setq bufferfile--dired-file-selected
+                    (and file-at-point
+                         (string= (file-truename file-at-point)
+                                  src-truename))))))))
+
     ;; Use inhibit-quit to ensure the file system mutation and the internal
     ;; buffer renaming are treated as a single atomic operation. This prevents
     ;; Emacs state fragmentation if the user attempts to abort the command
@@ -547,13 +562,13 @@ non-nil."
       (when bufferfile-dired-integration
         (let ((old-parent-dir (file-name-directory (expand-file-name filename)))
               (new-parent-dir (file-name-directory (expand-file-name new-filename))))
-          (unless (string= (file-truename (directory-file-name old-parent-dir))
-                           (file-truename (directory-file-name new-parent-dir)))
-            ;; Refresh previous directory (special case: moving files)
-            (bufferfile--refresh-dired-buffers old-parent-dir))
-
-          ;; Refresh the dired buffer and select the moved/renamed file
-          (bufferfile--refresh-dired-buffers new-parent-dir new-filename)))
+          (if (string= (file-truename (directory-file-name old-parent-dir))
+                       (file-truename (directory-file-name new-parent-dir)))
+              ;; Renamed in the same directory: refresh and select
+              (bufferfile--refresh-dired-buffers new-parent-dir new-filename)
+            ;; Moved to a new directory: refresh both, do not select
+            (bufferfile--refresh-dired-buffers old-parent-dir)
+            (bufferfile--refresh-dired-buffers new-parent-dir))))
 
       (run-hook-with-args 'bufferfile-post-rename-functions
                           filename
@@ -817,11 +832,11 @@ process."
 
           ;; Refresh dired buffers
           (when bufferfile-dired-integration
-            ;; Refresh the dired buffer
+            ;; Refresh the dired buffer without explicitly selecting the new
+            ;; file
             (let ((parent-dir-path (file-name-directory
                                     (expand-file-name new-filename))))
-              (bufferfile--refresh-dired-buffers parent-dir-path
-                                                 new-filename))))))))
+              (bufferfile--refresh-dired-buffers parent-dir-path))))))))
 
 ;;; Provide
 
