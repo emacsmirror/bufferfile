@@ -144,11 +144,11 @@ Each function receives three arguments: (previous-path new-path list-buffers).")
 
 (defvar bufferfile-pre-delete-functions nil
   "Hook run before deleting a file.
-Each function receives two arguments: (path list-buffers).")
+Each function receives two arguments: (path `list-buffers').")
 
 (defvar bufferfile-post-delete-functions nil
   "Hook run after deleting a file.
-Each function receives two arguments: (path list-buffers).")
+Each function receives two arguments: (path `list-buffers').")
 
 (defvar bufferfile-message-prefix "[bufferfile] "
   "Prefix used for messages and errors related to bufferfile operations.")
@@ -294,13 +294,15 @@ buffer's file name if it's under version control."
   "Get all Dired buffers visiting DIRECTORY."
   (let ((result nil))
     (when directory
-      (let ((dir (file-truename directory)))
+      (let ((dir (file-truename (directory-file-name directory))))
         (dolist (buf (buffer-list))
           (when (buffer-live-p buf)
             (with-current-buffer buf
-              (when (and (derived-mode-p 'dired-mode)
-                         (string= (file-truename default-directory)
-                                  dir))
+              (when (and
+                     (derived-mode-p 'dired-mode)
+                     (string=
+                      (file-truename (directory-file-name default-directory))
+                      dir))
                 (push buf result)))))))
     result))
 
@@ -311,31 +313,36 @@ buffer."
   (when goto-file
     (setq goto-file (expand-file-name goto-file)))
   (when directory
-    (dolist (buf (bufferfile--get-dired-buffers-visiting directory))
-      (with-current-buffer buf
-        (when (fboundp 'dired-revert)
-          (when bufferfile-verbose
-            (bufferfile--message "dired-revert: %s" default-directory))
-          (let ((inhibit-message (not bufferfile-verbose)))
-            (ignore-errors
-              (funcall 'dired-revert)))))))
+    (let ((dir-truename (file-truename (directory-file-name directory))))
+      (dolist (buf (bufferfile--get-dired-buffers-visiting directory))
+        (with-current-buffer buf
+          (when (fboundp 'dired-revert)
+            (when bufferfile-verbose
+              (bufferfile--message "dired-revert: %s" default-directory))
+            (let ((inhibit-message (not bufferfile-verbose)))
+              (ignore-errors
+                (funcall 'dired-revert))))))
 
-  ;; Walk windows
-  (walk-windows
-   (lambda (window)
-     (when window
-       (with-selected-window window
-         (when (derived-mode-p 'dired-mode)
-           (when (and goto-file
-                      (fboundp 'dired-goto-file)
-                      bufferfile--dired-file-selected)
-             (when bufferfile-verbose
-               (bufferfile--message "dired-goto-file: %s" goto-file))
-             (funcall 'dired-goto-file goto-file))))))
-   ;; Exclude the minibuffer
-   nil
-   ;; Apply to all frames
-   t))
+      ;; Walk windows
+      (walk-windows
+       (lambda (window)
+         (when window
+           (with-selected-window window
+             (with-current-buffer (window-buffer window)
+               ;; Ensure we only jump to the file in the correct Dired directory
+               (when (and (derived-mode-p 'dired-mode)
+                          (string= (file-truename (directory-file-name
+                                                   default-directory))
+                                   dir-truename))
+                 (when (and goto-file
+                            (fboundp 'dired-goto-file))
+                   (when bufferfile-verbose
+                     (bufferfile--message "dired-goto-file: %s" goto-file))
+                   (funcall 'dired-goto-file goto-file)))))))
+       ;; Exclude the minibuffer
+       nil
+       ;; Apply to all frames
+       t))))
 
 ;;; Rename file
 
@@ -443,18 +450,6 @@ non-nil."
     (when bufferfile-use-vc
       (require 'vc))
 
-    ;; Dired
-    (when bufferfile-dired-integration
-      (let ((parent-dir-path (file-name-directory (expand-file-name filename)))
-            (filename-truename (file-truename filename)))
-        (dolist (buf (bufferfile--get-dired-buffers-visiting parent-dir-path))
-          (with-current-buffer buf
-            (when (fboundp 'dired-get-file-for-visit)
-              (let ((file (funcall 'dired-get-file-for-visit)))
-                (setq-local bufferfile--dired-file-selected
-                            (and file (string= (file-truename file)
-                                               filename-truename)))))))))
-
     ;; Ensure that the destination directory exists
     (when bufferfile-make-target-directory
       (when-let* ((dest-dir (file-name-directory new-filename)))
@@ -532,22 +527,23 @@ non-nil."
                   ;; Restart eglot
                   (let ((inhibit-message t))
                     (funcall 'eglot-shutdown server)
-                    (funcall 'eglot-ensure)))))))))
+                    (funcall 'eglot-ensure))))))))
 
-    (when bufferfile-dired-integration
-      ;; Refresh previous directory (special case: moving files)
-      ;; TODO: check if the directory if filename is different from new-filename
-      (let ((parent-dir-path (file-name-directory (expand-file-name filename))))
-        (bufferfile--refresh-dired-buffers parent-dir-path))
+      (when bufferfile-dired-integration
+        (let ((old-parent-dir (file-name-directory (expand-file-name filename)))
+              (new-parent-dir (file-name-directory (expand-file-name new-filename))))
+          (unless (string= (file-truename (directory-file-name old-parent-dir))
+                           (file-truename (directory-file-name new-parent-dir)))
+            ;; Refresh previous directory (special case: moving files)
+            (bufferfile--refresh-dired-buffers old-parent-dir))
 
-      ;; Refresh the dired buffer
-      (let ((parent-dir-path (file-name-directory (expand-file-name new-filename))))
-        (bufferfile--refresh-dired-buffers parent-dir-path new-filename)))
+          ;; Refresh the dired buffer and select the moved/renamed file
+          (bufferfile--refresh-dired-buffers new-parent-dir new-filename)))
 
-    (run-hook-with-args 'bufferfile-post-rename-functions
-                        filename
-                        new-filename
-                        list-buffers)))
+      (run-hook-with-args 'bufferfile-post-rename-functions
+                          filename
+                          new-filename
+                          list-buffers))))
 
 ;;;###autoload
 (defun bufferfile-rename (&optional buffer)
@@ -659,8 +655,9 @@ This function performs a comprehensive cleanup of FILENAME by:
 
               (throw 'done t))))))
 
-    ;; Bind inhibit-quit to ensure that deleting the file and killing the internal
-    ;; buffers happens atomically, preventing detached buffers from persisting.
+    ;; Bind inhibit-quit to ensure that deleting the file and killing the
+    ;; internal buffers happens atomically, preventing detached buffers from
+    ;; persisting.
     (let ((inhibit-quit t))
       ;; Shut down eglot
       (when bufferfile-eglot-integration
