@@ -258,10 +258,6 @@ is non-nil."
   "Delete file and mark it as such in the version control system.
 If called interactively, read FILE, defaulting to the current
 buffer's file name if it's under version control."
-  (interactive (list (read-file-name "VC delete file: " nil
-                                     (when (vc-backend buffer-file-name)
-                                       buffer-file-name)
-                                     t)))
   (setq file (expand-file-name file))
   (let ((buf (get-file-buffer file))
         (backend (vc-backend file)))
