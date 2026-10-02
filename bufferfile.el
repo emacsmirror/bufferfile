@@ -3,7 +3,7 @@
 ;; Copyright (C) 2024-2026 James Cherti | https://www.jamescherti.com/contact/
 
 ;; Author: James Cherti <https://www.jamescherti.com/contact/>
-;; Version: 1.0.8
+;; Version: 1.0.9
 ;; URL: https://github.com/jamescherti/bufferfile.el
 ;; Keywords: convenience, files, tools
 ;; Package-Requires: ((emacs "26.1"))
